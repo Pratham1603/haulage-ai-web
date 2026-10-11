@@ -10,11 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Container, Section, SectionHeading, PrimaryButton, SecondaryButton, TextLink, PlaceholderChip } from "./ui";
 import { MODULES, ROLES, moduleBySlug } from "../../content/site";
 
-export const IntegrationStrip = ({ caption = "Connects to the tools you already use." }) => (
+const DEFAULT_INTEGRATIONS = ["Gmail", "Outlook", "WhatsApp", "TMS", "Tally", "GPS & FASTag", "ERP"];
+
+export const IntegrationStrip = ({ logos = DEFAULT_INTEGRATIONS, caption = "Connects to the tools you already use." }) => (
   <div data-testid="integration-strip" className="border-y bg-surface py-6">
     <Container className="flex flex-col items-center gap-4">
       <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-        {["Gmail", "Outlook", "WhatsApp", "TMS", "Tally", "GPS & FASTag", "ERP"].map((name) => (
+        {logos.map((name) => (
           <span key={name} className="text-sm font-semibold text-muted-foreground">
             {name}
           </span>
@@ -191,7 +193,10 @@ export const MetricsBand = ({ metrics }) => (
   </section>
 );
 
-export const CaseTeaserCard = () => (
+export const CaseTeaserCard = ({
+  copy = "Follow 18 pallets from the first email order to the final invoice, and see where each AI agent steps in.",
+  ctaLabel = "Follow the shipment",
+}) => (
   <Section>
     <Container>
       <div
@@ -201,47 +206,55 @@ export const CaseTeaserCard = () => (
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Case study · Illustrative scenario</p>
           <h3 className="mt-3 font-heading text-2xl font-bold">One shipment, Mumbai to Delhi, seven modules.</h3>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Follow 18 pallets from the first email order to the final invoice, and see where each AI agent steps in.
-          </p>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">{copy}</p>
         </div>
         <PrimaryButton to="/case-study" testId="case-teaser-btn">
-          Follow the shipment
+          {ctaLabel}
         </PrimaryButton>
       </div>
     </Container>
   </Section>
 );
 
-const TRUST_ICONS = [ShieldCheck, ClipboardList, LockKeyhole];
+const TRUST_ICONS = [ShieldCheck, ClipboardList, LockKeyhole, ClipboardList];
 
-export const TrustBlock = ({ points = ["Humans approve what matters", "Full audit trail", "Data privacy and consent"] }) => (
-  <Section tint>
-    <Container>
-      <div className="grid gap-5 sm:grid-cols-3" data-testid="trust-block">
-        {points.map((p, i) => {
-          const Icon = TRUST_ICONS[i % TRUST_ICONS.length];
-          return (
-            <div key={p} className="rounded-xl border bg-card p-6 shadow-sm">
-              <Icon className="h-5 w-5 text-heading" aria-hidden="true" />
-              <h3 className="mt-3 text-base font-semibold">{p}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                {i === 0 && "Money or risk above your limits goes to a human, with full context."}
-                {i === 1 && "Every AI action is logged, visible and reversible."}
-                {i === 2 && "Consent-based calling and encryption in transit and at rest."}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-8">
-        <TextLink to="/trust-security" testId="trust-block-link">
-          Read about Trust and Security
-        </TextLink>
-      </div>
-    </Container>
-  </Section>
-);
+const DEFAULT_TRUST_TEXT = {
+  "Humans approve what matters": "Money or risk above your limits goes to a human, with full context.",
+  "Full audit trail": "Every AI action is logged, visible and reversible.",
+  "Data privacy and consent": "Consent-based calling and encryption in transit and at rest.",
+  "Guardrails you set": "You set the limits; the agents never cross them.",
+};
+
+export const TrustBlock = ({
+  heading,
+  points = ["Humans approve what matters", "Full audit trail", "Data privacy and consent"],
+}) => {
+  const items = points.map((p) => (typeof p === "string" ? { title: p, text: DEFAULT_TRUST_TEXT[p] || "" } : p));
+  return (
+    <Section tint>
+      <Container>
+        {heading && <SectionHeading title={heading} testId="trust-heading" />}
+        <div className={`grid gap-5 sm:grid-cols-2 ${items.length === 4 ? "lg:grid-cols-4" : "sm:grid-cols-3"}`} data-testid="trust-block">
+          {items.map((p, i) => {
+            const Icon = TRUST_ICONS[i % TRUST_ICONS.length];
+            return (
+              <div key={p.title} className="rounded-xl border bg-card p-6 shadow-sm">
+                <Icon className="h-5 w-5 text-heading" aria-hidden="true" />
+                <h3 className="mt-3 text-base font-semibold">{p.title}</h3>
+                {p.text && <p className="mt-1.5 text-sm text-muted-foreground">{p.text}</p>}
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-8">
+          <TextLink to="/trust-security" testId="trust-block-link">
+            Read about Trust and Security
+          </TextLink>
+        </div>
+      </Container>
+    </Section>
+  );
+};
 
 export const Testimonial = ({ quote, name, role, testId }) => (
   <figure data-testid={testId} className="rounded-xl border bg-card p-6 shadow-sm md:p-8">
@@ -309,8 +322,10 @@ export const RoleTabs = () => (
   </Section>
 );
 
-export const RelatedModules = ({ current }) => {
-  const related = MODULES.filter((m) => m.slug !== current).slice(0, 3);
+export const RelatedModules = ({ current, slugs = null }) => {
+  const related = slugs
+    ? slugs.map((s) => moduleBySlug(s)).filter(Boolean).slice(0, 3)
+    : MODULES.filter((m) => m.slug !== current).slice(0, 3);
   return (
     <div className="grid gap-5 sm:grid-cols-3" data-testid="related-modules">
       {related.map(({ slug, name, icon: Icon, line }) => (

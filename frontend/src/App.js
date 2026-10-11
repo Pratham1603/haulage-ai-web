@@ -9,15 +9,9 @@ import Contact from "@/pages/Contact";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import ComingNext from "@/pages/ComingNext";
+import ModulePage from "@/pages/ModulePage";
 
 const COMING = [
-  { path: "/product/back-office-automation", title: "Back-Office Automation" },
-  { path: "/product/voice-ai", title: "Voice AI" },
-  { path: "/product/freight-capacity-matching", title: "Freight and Capacity Matching" },
-  { path: "/product/warehouse-vision", title: "Warehouse Vision" },
-  { path: "/product/compliance-finance", title: "Compliance and Finance" },
-  { path: "/product/control-tower", title: "Control Tower" },
-  { path: "/product/reverse-logistics", title: "Reverse Logistics" },
   { path: "/solutions", title: "Solutions" },
   { path: "/solutions/transporters-fleet-owners", title: "For Transporters and Fleet Owners" },
   { path: "/solutions/shippers-brands", title: "For Shippers and Brands" },
@@ -47,6 +41,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/product" element={<Product />} />
+            <Route path="/product/:slug" element={<ModulePage />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/book-a-demo" element={<Contact />} />
             <Route path="/login" element={<Login />} />
