@@ -7,9 +7,19 @@ import Home from "@/pages/Home";
 import Product from "@/pages/Product";
 import Contact from "@/pages/Contact";
 import Login from "@/pages/Login";
-import Dashboard from "@/pages/Dashboard";
 import ComingNext from "@/pages/ComingNext";
 import ModulePage from "@/pages/ModulePage";
+import { MockProvider } from "@/mock/store";
+import { AppShell } from "@/components/app/AppShell";
+import ControlTower from "@/pages/app/ControlTower";
+import Orders from "@/pages/app/Orders";
+import Loads from "@/pages/app/Loads";
+import Fleet from "@/pages/app/Fleet";
+import Warehouse from "@/pages/app/Warehouse";
+import Finance from "@/pages/app/Finance";
+import Returns from "@/pages/app/Returns";
+import Calls from "@/pages/app/Calls";
+import Agents from "@/pages/app/Agents";
 
 const COMING = [
   { path: "/solutions", title: "Solutions" },
@@ -49,10 +59,22 @@ function App() {
               path="/app"
               element={
                 <RequireAuth>
-                  <Dashboard />
+                  <MockProvider>
+                    <AppShell />
+                  </MockProvider>
                 </RequireAuth>
               }
-            />
+            >
+              <Route index element={<ControlTower />} />
+              <Route path="orders" element={<Orders />} />
+              <Route path="loads" element={<Loads />} />
+              <Route path="fleet" element={<Fleet />} />
+              <Route path="warehouse" element={<Warehouse />} />
+              <Route path="finance" element={<Finance />} />
+              <Route path="returns" element={<Returns />} />
+              <Route path="calls" element={<Calls />} />
+              <Route path="agents" element={<Agents />} />
+            </Route>
             {COMING.map((r) => (
               <Route key={r.path} path={r.path} element={<ComingNext title={r.title} />} />
             ))}
