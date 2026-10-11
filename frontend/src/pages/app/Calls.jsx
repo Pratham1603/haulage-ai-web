@@ -30,7 +30,7 @@ const Calls = () => {
             <button
               key={c.id}
               type="button"
-              data-testid={`call-${c.id}`}
+              data-testid={c.id}
               onClick={() => setOpen(c.id)}
               aria-pressed={open === c.id}
               className={`block w-full rounded-xl border p-4 text-left transition-colors ${

@@ -39,7 +39,14 @@ AI-native logistics operating system for Indian freight. Two parts: (A) 28-page 
 - blocks.jsx extended: IntegrationStrip(logos,caption), CaseTeaserCard(copy,ctaLabel), TrustBlock(heading,points), RelatedModules(slugs); Container spreads rest props (testids)
 - Testing agent iteration_2: frontend 100%, all sections/tags/routes verified, dark mode + mobile OK
 
+## Implemented (2026-06, Prompt 5)
+- Full dashboard demo at /app: AppShell (left nav 9 sections, top bar with canned-answer search box, notifications, shared theme toggle, Demo data badge, user menu with role switcher), right-side Agent Activity feed on /app only
+- Mock store /src/mock/store.jsx (frontend-only per spec): exceptions, orders, loads, fleet, pallets, invoices, returns, calls, agents/guardrails, audit log, activity feed; toasts via sonner
+- 9 pages: Control Tower (KPIs, 6 exception cards incl. Beawar breakdown with 3 re-plan options, "41 handled by AI" expander, SVG corridor map, Owner margin/utilisation panel), Orders (ORD-1042 side-by-side extraction detail, editable low-confidence weight), Loads and Matching (ranked trucks, capacity bar + one-click part-load fill, coordination loop), Fleet (table + utilisation bars), Warehouse (tablet pallet cards, camera overlay divs, rule card, Mark fixed), Finance (invoice audit w/ INV-2211 detention variance, aging, reminder sequence), Returns (pipeline board, RMA-118), Calls (Gujarati/Hindi native-script transcripts + English + pending-review note), Agents (autonomy dials, lane benchmarks/ceilings, thresholds, spend limits, allowed actions, searchable audit log — changes add audit entries)
+- Role homes: Dispatcher → /app/loads, Warehouse Lead → /app/warehouse, Finance → /app/finance, Owner/Ops Manager → /app
+- Old placeholder Dashboard.jsx removed; /app uses nested routes under RequireAuth
+
 ## Backlog (next prompts)
-- P0: Role/solutions pages template (Prompt 3)
-- P1: How It Works, Case Study, Integrations, Trust & Security, Pricing, About, Resources hub, Blog index+article, ROI Calculator, Guides, Legal pages
-- P2: Full dashboard demo with seeded mock data per module
+- P0: Prompt 3 (Solutions overview + 4 role pages from one template) and Prompt 4 were skipped by user; await user direction
+- P1: How It Works, Case Study, Integrations, Trust & Security, Pricing, About, Resources hub, Blog, ROI Calculator, Guides, Legal pages (still Coming-next)
+- P2: Prompt 6 (per user's 6-prompt plan, likely resources/legal/final)

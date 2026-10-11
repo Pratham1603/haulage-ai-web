@@ -1,0 +1,22 @@
+{
+  "summary": "Frontend-only testing of Prompt 5 dashboard (/app). All 13 feature flows from the review request were exercised end-to-end against the public preview URL with Playwright. Login guard (redirects both /app and /app/orders to /login when logged out), demo login (any email/password lands on Control Tower), role switcher (Dispatcher -> /app/loads, Warehouse Lead -> /app/warehouse, Finance -> /app/finance, Owner -> /app, Ops Manager -> /app) all PASS. Control Tower: 5 KPIs render, 6 exception cards with status tags, option A/B/C selection works, 'Approve option B' flips tag to Handled by AI + toast 'Approved option B' + new agent-activity-feed entry at top, '41 handled by AI' handled-toggle expands, SVG live map with breakdown pin renders. Orders: ORD-1042 shows editable weight input, Approve creates in TMS (toast 'ORD-1042 created in TMS'), Escalate present. Loads: capacity-label flips 18/22 -> 22/22 with correct label text on add-part-load-btn; load switching works. Warehouse: pallet-7 and pallet-12 mark-fixed flip tags with toasts; retailer manual excerpt 'p. 42' present. Finance: INV-2211 shows Rs 3,600 variance; Approve -> 'Correction approved' toast; dispute button present; receivables aging rendered. Calls: all 4 calls present, native Devanagari (Hindi) + Gujarati scripts shown with English translations, 'pending native-speaker review' note present. Agents: changing dial, toggling allowed checkbox, editing lane benchmark EACH adds a NEW top row to audit-log (5 -> 6 -> 7 -> 8) with toast 'Guardrail updated'; audit-search filters correctly. Top bar: app-search-input returns canned app-search-answer with LR-8839 + Beawar on Enter; notifications bell opens radix dropdown; demo-data-badge visible. Theme toggle flips html.dark, persists to localStorage key 'haulage-theme' and survives reload. No horizontal overflow at 768px tablet or 390px mobile; 9 mobile nav items. Marketing site regression (/, /product/voice-ai) still renders. Zero console errors across all pages.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Calls.jsx was emitting double-prefixed testids: data-testid={`call-${c.id}`} where c.id is already 'call-1'/'call-2'/..., producing 'call-call-1'. The review request (and sensible selector hygiene) specifies 'call-1'/'call-2'. Fixed by changing to data-testid={c.id} so testids now resolve as 'call-1', 'call-2', 'call-3', 'call-4'. One-line test-infra fix, no functional change.",
+    "Warehouse rule text uses 'p. 42' (space) which is correct per the UI but worth noting that any test looking for 'p.42' (no space) will miss. Minor stylistic note only."
+  ],
+  "updated_files": ["/app/frontend/src/pages/app/Calls.jsx"],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "demo@haulage.ai / demo1234 (any email+password works per spec)",
+  "seed_data_creation": "none - all mock seed data loaded from /app/frontend/src/mock/store.jsx",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Dashboard /app and all 8 subroutes verified. Important notes: (1) Nav testids are lowercased slugs: 'app-nav-orders', 'app-nav-loads-and-matching', 'app-nav-fleet', 'app-nav-warehouse', 'app-nav-finance', 'app-nav-returns', 'app-nav-calls', 'app-nav-agents', 'app-nav-control-tower'. (2) audit-log is a <table> with <tbody><tr>; use tbody tr for row counting. (3) Role switcher and notifications are radix DropdownMenus - click trigger then click menuitem by exact text. (4) Mock state resets on full page reload (frontend-only store, per spec) - don't chain state-changing tests across reloads. (5) Search answer requires Enter/submit, not just typing. (6) Theme preference key is 'haulage-theme' (shared with marketing site). (7) After my fix, Calls testids are now 'call-1'...'call-4' as specified."
+}
