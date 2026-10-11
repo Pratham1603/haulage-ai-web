@@ -31,7 +31,15 @@ AI-native logistics operating system for Indian freight. Two parts: (A) 28-page 
 - /app dashboard shell: guarded by demo auth, role switcher, theme toggle, KPI cards + exceptions table with StatusTags (mock data)
 - /app/memory/test_credentials.md updated
 
+## Implemented (2026-06, Prompt 2)
+- One reusable ModulePage template (/src/pages/ModulePage.jsx) fed by 7 typed content objects in /src/content/modules.js; route /product/:slug (unknown slug redirects to /product)
+- Template sections: Hero, IntegrationStrip (per-module logos), ProblemCards, StepRow, optional extra, 4 alternating FeatureBlocks, BeforeAfterTable, MetricsBand, CaseTeaserCard, TrustBlock, Testimonial, FaqAccordion (6), RelatedModules (3), FinalCtaBanner
+- 35 compact styled-div mockups in /src/components/site/moduleMockups.jsx (keyed MODULE_MOCKUPS) with the 3 status tags
+- Voice AI extra: language band with native Hindi/Gujarati script + English translations, "pending native-speaker review" note, language chips
+- blocks.jsx extended: IntegrationStrip(logos,caption), CaseTeaserCard(copy,ctaLabel), TrustBlock(heading,points), RelatedModules(slugs); Container spreads rest props (testids)
+- Testing agent iteration_2: frontend 100%, all sections/tags/routes verified, dark mode + mobile OK
+
 ## Backlog (next prompts)
-- P0: Module pages from one template fed by content objects; Role/solutions pages template
+- P0: Role/solutions pages template (Prompt 3)
 - P1: How It Works, Case Study, Integrations, Trust & Security, Pricing, About, Resources hub, Blog index+article, ROI Calculator, Guides, Legal pages
 - P2: Full dashboard demo with seeded mock data per module

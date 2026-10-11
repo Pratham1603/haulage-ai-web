@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
-export const Container = ({ className = "", children }) => (
-  <div className={`mx-auto w-full max-w-[1200px] px-5 md:px-8 ${className}`}>{children}</div>
+export const Container = ({ className = "", children, ...rest }) => (
+  <div className={`mx-auto w-full max-w-[1200px] px-5 md:px-8 ${className}`} {...rest}>{children}</div>
 );
 
 export const Section = ({ id, tint = false, className = "", children }) => (

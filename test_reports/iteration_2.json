@@ -1,0 +1,20 @@
+{
+  "summary": "Frontend-only testing of 7 module pages (Prompt 2). All 7 routes render unique page-specific content with correct <title>/meta, all template sections in order, 4 feature blocks each with testids, 6 FAQs each, status tags present (teal/amber/red), language band only on /product/voice-ai with Hindi+Gujarati native scripts and the pending-review note + chips. Navbar Product dropdown and footer both expose all 7 module links. Unknown slug /product/nonexistent redirects to /product. Dark mode toggles and renders fine. Mobile 390px renders without broken layout. No console errors observed. Fixed one minor test-infra bug: Container did not forward data-testid, so hero testid module-hero-<slug> was not emitted; patched to spread extra props so testid now resolves on all 7 pages.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Container component in /app/frontend/src/components/site/ui.jsx was swallowing data-testid passed by Hero (Container used className/children only). Fixed by spreading ...rest onto the wrapper div so module-hero-<slug> renders. Consider forwarding ...rest on other wrapper components (Section) similarly for future testability."
+  ],
+  "updated_files": ["/app/frontend/src/components/site/ui.jsx"],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Prompt 2 (7 module pages) verified. All data-testids present: module-hero-<slug>, feature-<slug>-0..3, mockup-*, language-band (voice-ai only), related-modules, status-tag-ai/approval/human, case-teaser-btn, faq-question-0..5. Case teaser 'Read the full story' intentionally points to /case-study (Coming-next page, planned later). Before/after table is intentionally horizontally scrollable on small screens."
+}
