@@ -16,14 +16,18 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim() || !password) {
       setError("Enter any email and password to try the demo.");
       return;
     }
-    login(email.trim());
-    navigate("/app", { replace: true });
+    try {
+      await login(email.trim(), password);
+      navigate("/app", { replace: true });
+    } catch (loginError) {
+      setError(loginError.message || "Unable to log in.");
+    }
   };
 
   return (

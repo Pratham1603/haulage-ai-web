@@ -5,6 +5,7 @@ import { StatusTag } from "../../components/site/ui";
 import { Panel, Kpi, ActionBtn, ResolvedNote } from "../../components/app/bits";
 import { useMock } from "../../mock/store";
 import { useAuth } from "../../auth";
+import { apiRequest, LIVE_API_ENABLED } from "../../lib/api";
 
 const KPIS = [
   { label: "Live shipments", value: "47" },
@@ -43,6 +44,17 @@ const MapSvg = () => (
 
 const ExceptionCard = ({ ex }) => {
   const { resolveException, selectOption } = useMock();
+
+  const handleResolve = (action, label) => {
+    resolveException(ex.id, action, label);
+    if (LIVE_API_ENABLED) {
+      apiRequest(`/operations/exceptions/${ex.id}/resolve`, {
+        method: "POST",
+        body: JSON.stringify({ action, resolution_note: label, selected_option: ex.selected }),
+      }).catch(() => {});
+    }
+  };
+
   return (
     <article data-testid={`exception-${ex.id}`} className="rounded-xl border bg-card p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
@@ -81,21 +93,21 @@ const ExceptionCard = ({ ex }) => {
         <div className="mt-3 flex flex-wrap gap-2">
           {ex.kind === "link" ? (
             <>
-              <ActionBtn primary testId={`exception-${ex.id}-open`} onClick={() => { window.location.hash = ""; resolveException(ex.id, "viewed", "Opened in detail view"); }}>
+              <ActionBtn primary testId={`exception-${ex.id}-open`} onClick={() => { window.location.hash = ""; handleResolve("viewed", "Opened in detail view"); }}>
                 {ex.linkLabel}
               </ActionBtn>
-              <ActionBtn testId={`exception-${ex.id}-takeover`} onClick={() => resolveException(ex.id, "takeover", "Taken over by you")}>Take over</ActionBtn>
+              <ActionBtn testId={`exception-${ex.id}-takeover`} onClick={() => handleResolve("takeover", "Taken over by you")}>Take over</ActionBtn>
             </>
           ) : (
             <>
               <ActionBtn primary testId={`exception-${ex.id}-approve`}
-                onClick={() => resolveException(ex.id, "approve", ex.kind === "options" ? `Approved option ${ex.selected}` : "Approved")}>
+                onClick={() => handleResolve("approve", ex.kind === "options" ? `Approved option ${ex.selected}` : "Approved")}>
                 Approve{ex.kind === "options" ? ` option ${ex.selected}` : ""}
               </ActionBtn>
-              <ActionBtn testId={`exception-${ex.id}-counter`} onClick={() => resolveException(ex.id, "counter", "Counter sent for review")}>
+              <ActionBtn testId={`exception-${ex.id}-counter`} onClick={() => handleResolve("counter", "Counter sent for review")}>
                 Counter / Edit
               </ActionBtn>
-              <ActionBtn testId={`exception-${ex.id}-takeover`} onClick={() => resolveException(ex.id, "takeover", "Taken over by you")}>Take over</ActionBtn>
+              <ActionBtn testId={`exception-${ex.id}-takeover`} onClick={() => handleResolve("takeover", "Taken over by you")}>Take over</ActionBtn>
             </>
           )}
         </div>
