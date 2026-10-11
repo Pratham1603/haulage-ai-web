@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 210 24% 16%;
+        --card: 0 0% 100%;
+        --card-foreground: 210 24% 16%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 210 24% 16%;
+        --primary: 210 65% 12%;
+        --primary-foreground: 204 33% 97%;
+        --secondary: 204 33% 97%;
+        --secondary-foreground: 210 65% 12%;
+        --muted: 204 33% 97%;
+        --muted-foreground: 206 10% 40%;
+        --accent: 204 33% 97%;
+        --accent-foreground: 210 65% 12%;
+        --destructive: 4 77% 40%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 205 17% 86%;
+        --input: 205 17% 86%;
+        --ring: 210 65% 12%;
+        --heading: 210 65% 12%;
+        --navy: 210 65% 12%;
+        --surface: 204 33% 97%;
+        --footer: 210 65% 12%;
+        --footer-foreground: 204 33% 97%;
+        --status-ai: 175 77% 26%;
+        --status-approval: 26 91% 37%;
+        --status-human: 4 77% 40%;
+        --radius: 12px;
+        color-scheme: light;
+    }
+    .dark {
+        --background: 213 55% 9%;
+        --foreground: 208 35% 93%;
+        --card: 213 48% 14%;
+        --card-foreground: 208 35% 93%;
+        --popover: 213 48% 14%;
+        --popover-foreground: 208 35% 93%;
+        --primary: 204 33% 97%;
+        --primary-foreground: 210 65% 12%;
+        --secondary: 213 48% 14%;
+        --secondary-foreground: 208 35% 93%;
+        --muted: 212 48% 12%;
+        --muted-foreground: 209 15% 66%;
+        --accent: 212 48% 12%;
+        --accent-foreground: 208 35% 93%;
+        --destructive: 0 91% 71%;
+        --destructive-foreground: 210 65% 12%;
+        --border: 211 28% 23%;
+        --input: 211 28% 23%;
+        --ring: 208 35% 93%;
+        --heading: 0 0% 100%;
+        --navy: 210 65% 12%;
+        --surface: 212 48% 12%;
+        --footer: 213 59% 6%;
+        --footer-foreground: 208 35% 93%;
+        --status-ai: 172 66% 50%;
+        --status-approval: 43 96% 56%;
+        --status-human: 0 91% 71%;
+        color-scheme: dark;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    html {
+        scroll-behavior: smooth;
+    }
+    body {
+        @apply bg-background font-sans text-foreground antialiased;
+    }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-heading text-heading;
+    }
+    :focus-visible {
+        outline: 2px solid hsl(var(--ring));
+        outline-offset: 2px;
+    }
+    ::selection {
+        background: hsl(var(--navy));
+        color: hsl(var(--primary-foreground));
+    }
+}
+
+/* Dark mode: borders instead of drop shadows */
+.dark .shadow,
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl,
+.dark .shadow-2xl {
+    box-shadow: none !important;
+}
+
+@layer base {
+    [data-debug-wrapper="true"] {
+        display: contents !important;
+    }
+}

@@ -1,0 +1,166 @@
+{
+  "project_name": "Haulage AI",
+  "project_type": "Logistics AI OS for Indian Freight (28-page Marketing + Logged-in Dashboard Shell)",
+  "emotional_tone": "Tactical Precision, High-Trust Indian Freight Operating System, Direct, Practical, Operations-Focused",
+  "archetype": "THE PERFORMANCE PRO / SWISS INDUSTRIAL LOGISTICS",
+  "typography": {
+    "heading_font": "Manrope",
+    "body_font": "Inter",
+    "mono_font": "JetBrains Mono",
+    "weights": {
+      "heading": "700",
+      "subheading": "600",
+      "body": "400",
+      "body_medium": "500",
+      "mono_data": "500"
+    },
+    "hierarchy": {
+      "h1_hero": "text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.1]",
+      "h2_section": "text-2xl sm:text-3xl lg:text-4xl tracking-tight leading-snug",
+      "h3_subsection": "text-xl sm:text-2xl font-semibold",
+      "h4_card": "text-lg sm:text-xl font-semibold",
+      "body_lead": "text-lg sm:text-xl text-muted leading-relaxed",
+      "body": "text-base leading-relaxed",
+      "small_label": "text-xs uppercase tracking-[0.15em] font-bold text-muted"
+    }
+  },
+  "colors": {
+    "css_variables_required": true,
+    "theme_setup": {
+      "strategy": "Tailwind class-based dark mode (darkMode: 'class')",
+      "toggle_behavior": "Sun/Moon icon toggle in Header, stored in localStorage, script sync on mount to avoid FOUC",
+      "default_theme": "dark"
+    },
+    "light_mode": {
+      "brand_navy_primary": "#0B1F33",
+      "text": "#1F2933",
+      "text_muted": "#5B6770",
+      "border": "#D5DCE1",
+      "surface": "#F5F8FA",
+      "background": "#FFFFFF",
+      "status_handled_by_ai": {
+        "text": "#0F766E",
+        "bg": "#CCFBF1",
+        "border": "#99F6E4",
+        "label": "Handled by AI"
+      },
+      "status_needs_approval": {
+        "text": "#B45309",
+        "bg": "#FEF3C7",
+        "border": "#FDE68A",
+        "label": "Needs Approval"
+      },
+      "status_needs_human": {
+        "text": "#B42318",
+        "bg": "#FEE2E2",
+        "border": "#FCA5A5",
+        "label": "Needs Human"
+      },
+      "buttons": {
+        "primary": "bg-[#0B1F33] text-white hover:bg-[#132E4A] transition-colors rounded-xl font-medium",
+        "secondary": "border border-[#0B1F33] text-[#0B1F33] hover:bg-[#0B1F33]/5 transition-colors rounded-xl font-medium"
+      },
+      "footer_bg": "#0B1F33"
+    },
+    "dark_mode": {
+      "background": "#0A1522",
+      "surface": "#101E2E",
+      "card": "#132336",
+      "border": "#2A3A4B",
+      "text": "#E6EDF3",
+      "text_muted": "#9AA8B5",
+      "headings": "#FFFFFF",
+      "status_handled_by_ai": {
+        "text": "#2DD4BF",
+        "bg": "rgba(45, 212, 191, 0.12)",
+        "border": "rgba(45, 212, 191, 0.3)",
+        "label": "Handled by AI"
+      },
+      "status_needs_approval": {
+        "text": "#FBBF24",
+        "bg": "rgba(251, 191, 36, 0.12)",
+        "border": "rgba(251, 191, 36, 0.3)",
+        "label": "Needs Approval"
+      },
+      "status_needs_human": {
+        "text": "#F87171",
+        "bg": "rgba(248, 113, 113, 0.12)",
+        "border": "rgba(248, 113, 113, 0.3)",
+        "label": "Needs Human"
+      },
+      "buttons": {
+        "primary": "bg-[#F5F8FA] text-[#0B1F33] hover:bg-white transition-colors rounded-xl font-semibold shadow-sm",
+        "secondary": "border border-[#E6EDF3] text-[#E6EDF3] hover:bg-[#E6EDF3]/10 transition-colors rounded-xl font-medium"
+      },
+      "footer_bg": "#060E18",
+      "footer_border": "#2A3A4B"
+    }
+  },
+  "layout_and_spacing": {
+    "container_max_width": "max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8",
+    "section_padding": "py-16 md:py-24",
+    "card_radius": "rounded-xl (12px)",
+    "grid_gap": "gap-6 md:gap-8",
+    "bento_strategy": "High-density command center grids with strict alignment and clean 1px borders"
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-md bg-white/80 dark:bg-[#0A1522]/85 border border-border/60",
+    "borders": "1px solid border lines, subtle inner glows on active AI cards",
+    "textures": "Subtle dot-matrix noise grid pattern overlay for dark hero sections",
+    "accent_details": "Status tag pills with live pulsing indicators (ping animation for active AI actions)",
+    "micro_interactions": "Smooth active tab state indicators, collapsible accordions with smooth chevron rotation"
+  },
+  "routes_manifest": {
+    "total_routes": 28,
+    "key_built_pages": [
+      { "path": "/", "name": "Home Page", "status": "Full Page" },
+      { "path": "/product", "name": "Product Overview", "status": "Full Page" },
+      { "path": "/contact", "name": "Book a Demo", "status": "Full Page" },
+      { "path": "/login", "name": "Login", "status": "Full Page" },
+      { "path": "/app", "name": "Logistics Operating System Dashboard", "status": "Full Interactive App Shell" }
+    ],
+    "unbuilt_pages_placeholder": "Full branded layout shell with header, subnav, page-specific hero badge, summary statement, and 'Coming next in Haulage AI OS' interactive roadmap widget."
+  },
+  "shared_components": [
+    "Navbar (with logo, module nav menu, theme toggle, primary CTA button, login link)",
+    "Footer (with high contrast dark bg, 4 columns, regulatory/compliance badges like GST & e-way bill ready, copyright)",
+    "Hero (with Control Tower interactive mockup built using CSS/divs)",
+    "IntegrationStrip (WhatsApp, Vahan, FASTag, e-Way Bill, Tally, SAP, E-Logistics API logos)",
+    "ProblemCards (4 core friction points of Indian freight: Delayed POD, Manual Rate Negotiation, Unreachable Drivers, GST Reconciliation)",
+    "StepRow (4-stage Plan / Dispatch / Track / Adjust loop with live visual status tags)",
+    "FeatureBlock (Voice AI highlight featuring dual English/Hindi transcript call card mockup)",
+    "BeforeAfterTable (Legacy Indian Transport Office vs. Haulage AI Autonomous OS)",
+    "MetricsBand (Real-time ROI metrics: -65% Dispatch Time, 99.4% On-time POD, 4.2x Fleet Utilization)",
+    "CaseTeaserCard (Indian logistics enterprise case study teaser)",
+    "TrustBlock (Security, SOC2, GST & Fastag API compliance badges)",
+    "Testimonial (Logistics Head & Transporter quotes with operational credentials)",
+    "FaqAccordion (Clear accordion for ROI, integration duration, driver onboarding, WhatsApp usage)",
+    "RelatedModules (7-module grid link switcher)",
+    "FinalCtaBanner (Direct practical ROI call to action)",
+    "StatusTag (Reusable component for Handled by AI, Needs Approval, Needs Human)",
+    "MockupCard (Interactive CSS frame displaying live dispatch/track UI)",
+    "FormCard (Demo booking form with multi-select challenges, validation & API mock)"
+  ],
+  "image_urls": {
+    "hero_truck": "https://images.unsplash.com/photo-1605705658744-45f0fe8f9663?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "indian_freight_highway": "https://images.unsplash.com/photo-1681004478577-cb7f8421f78c?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "logistics_port_containers": "https://images.unsplash.com/photo-1700716465891-9e5e9f501d7d?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "freight_yard": "https://images.unsplash.com/photo-1651649503984-5b5f3514d6f0?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "truck_driver": "https://images.unsplash.com/photo-1716512060259-d114cfba13e8?crop=entropy&cs=srgb&fm=jpg&q=85"
+  },
+  "instructions_to_main_agent": [
+    "1. Always import and apply CSS variables for theme colors. Use Tailwind standard dark: variants linked to class 'dark'.",
+    "2. Ensure all interactive elements have data-testid attributes (kebab-case) for test automation.",
+    "3. Use direct, pragmatic Indian freight language (e.g., e-way bill verification, FASTag tolls, Lorry Receipt (LR), Proof of Delivery (POD), WhatsApp Driver Bot, GST Compliance).",
+    "4. Highlight the three AI human-in-the-loop states consistently using StatusTag (Teal for Handled by AI, Amber for Needs Approval, Red for Needs Human).",
+    "5. For images, use the Unsplash URLs supplied in design_guidelines.json, never dummy placeholder URLs.",
+    "6. Make sure dark mode is activated seamlessly without visual glitches, reading from localStorage or system preference."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Never use generic centered layouts or plain flat text cards.",
+    "Use 12px rounded corners everywhere per specification (rounded-xl).",
+    "All interactive and key informational elements MUST include a data-testid attribute.",
+    "Do NOT use HTML select or native date inputs; use standard custom or shadcn components.",
+    "Ensure high contrast on dark surfaces with clear borders (#2A3A4B in dark theme)."
+  ]
+}
