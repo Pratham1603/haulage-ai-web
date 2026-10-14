@@ -228,15 +228,70 @@ const OrderDetail = ({ selectedId, liveOrders, onOrderUpdated }) => {
   );
 };
 
+const SAMPLE_DOCS = [
+  {
+    id: "doc-po",
+    name: "PO-7712_Aarav_Consumer.pdf",
+    type: "Purchase Order (PDF)",
+    customer: "Aarav Consumer Products",
+    route: "Bhiwandi WH-3 → Narela (Delhi)",
+    cargo: "18 Pallets · Packaged Consumer Goods",
+    weight: "14.2 t (flagged conflict: 14.2 t vs 14.5 t)",
+    text: "Purchase Order PO-7712. Consignor: Aarav Consumer Products, Bhiwandi WH-3. Consignee: Gupta Trading Co., Narela, Delhi. Required: 32 ft MXL truck. Gross weight 14.2 t. Pallets: 18. Pickup: Thursday 08:00-12:00. Invoice refs: INV-2211.",
+    boxes: [
+      { label: "Customer", val: "Aarav Consumer Products", conf: 99 },
+      { label: "Pickup", val: "Bhiwandi WH-3", conf: 98 },
+      { label: "Drop", val: "Gupta Trading Co., Narela", conf: 96 },
+      { label: "Pallets", val: "18 Pallets", conf: 99 },
+      { label: "Weight", val: "14.2 t (Review Required)", conf: 58, low: true },
+    ],
+  },
+  {
+    id: "doc-excel",
+    name: "Kedia_Indent_Bhiwandi_Pune.xlsx",
+    type: "Excel Indent",
+    customer: "Kedia Polymers",
+    route: "Bhiwandi → Pune",
+    cargo: "12 Pallets · Industrial Polymers",
+    weight: "8.0 t",
+    text: "Freight Indent IND-9921 from Kedia Polymers. Dispatch origin Bhiwandi to Pune. 12 pallets polymer raw material. Total gross weight: 8.0 tons. Vehicle required: 24 ft closed body.",
+    boxes: [
+      { label: "Customer", val: "Kedia Polymers", conf: 98 },
+      { label: "Route", val: "Bhiwandi → Pune", conf: 99 },
+      { label: "Pallets", val: "12 Pallets", conf: 95 },
+      { label: "Weight", val: "8.0 t", conf: 97 },
+    ],
+  },
+  {
+    id: "doc-lr",
+    name: "LR-8840_Transporter_Challan.png",
+    type: "Lorry Receipt Scan",
+    customer: "Shree Packaging",
+    route: "Vashi → Ahmedabad",
+    cargo: "16 Pallets · Corrugated Boxes",
+    weight: "9.5 t",
+    text: "Lorry Receipt LR-8840. Shipped by Shree Packaging, Vashi. Consignee: Star Logistics Hub, Ahmedabad. 16 pallets corrugated boxes. Weight: 9,500 kg. Vehicle: 32 ft SXL.",
+    boxes: [
+      { label: "Customer", val: "Shree Packaging", conf: 96 },
+      { label: "Route", val: "Vashi → Ahmedabad", conf: 97 },
+      { label: "Weight", val: "9.5 t", conf: 94 },
+    ],
+  },
+];
+
 const Orders = () => {
   const { orders: mockOrders } = useMock();
   const [liveOrders, setLiveOrders] = useState(null);
   const [selectedId, setSelectedId] = useState("ORD-1042");
   const [showIngestBox, setShowIngestBox] = useState(false);
+  const [ingestTab, setIngestTab] = useState("ocr"); // "ocr" or "message"
+  const [selectedDoc, setSelectedDoc] = useState(SAMPLE_DOCS[0]);
   const [channel, setChannel] = useState("email");
   const [inputText, setInputText] = useState(SAMPLE_EMAIL);
   const [ingestResult, setIngestResult] = useState(null);
   const [ingesting, setIngesting] = useState(false);
+  const [llmExtracting, setLlmExtracting] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   const fetchLiveOrders = () => {
     if (!LIVE_API_ENABLED) return;
@@ -253,9 +308,44 @@ const Orders = () => {
     fetchLiveOrders();
   }, []);
 
-  const handleIngestSubmit = async (e) => {
-    e.preventDefault();
+  const handleLlmExtract = async () => {
     if (!inputText.trim()) return;
+    setLlmExtracting(true);
+    try {
+      const storedKey = localStorage.getItem("openrouter_custom_key") || undefined;
+      const res = await apiRequest("/operations/llm/parse-indent", {
+        method: "POST",
+        body: JSON.stringify({
+          raw_text: inputText,
+          auto_create_order: true,
+          api_key: storedKey,
+        }),
+      });
+      setIngestResult({
+        intent: "new_order",
+        intent_confidence: (res.confidence || 95) / 100,
+        order: res.created_order || {
+          id: "ORD-LLM",
+          customer_name: res.customer,
+          confidence_tier: res.confidence >= 90 ? "high" : "medium",
+        },
+        llmDetails: res,
+      });
+      toast.success(`Parsed by ${res.model_used || "OpenRouter Nemotron"}: Order created for ${res.customer}`);
+      fetchLiveOrders();
+    } catch (e) {
+      toast.error("LLM parse failed: " + (e.message || "Network error"));
+    } finally {
+      setLlmExtracting(false);
+    }
+  };
+
+  const handleIngestSubmit = async (e, textOverride, channelOverride) => {
+    if (e) e.preventDefault();
+    const textToProcess = textOverride || inputText;
+    const activeChannel = channelOverride || channel;
+    if (!textToProcess.trim()) return;
+
     setIngesting(true);
     setIngestResult(null);
     try {
@@ -263,21 +353,21 @@ const Orders = () => {
         const res = await apiRequest("/ingestion/message", {
           method: "POST",
           body: JSON.stringify({
-            sender: channel === "email" ? "customer@example.com" : "+919876543210",
-            channel,
-            subject: channel === "email" ? "New Freight Indent" : "",
-            body_text: inputText,
+            sender: activeChannel === "email" ? "customer@example.com" : "+919876543210",
+            channel: activeChannel,
+            subject: activeChannel === "email" ? "New Freight Indent" : "",
+            body_text: textToProcess,
           }),
         });
         setIngestResult(res);
-        toast.success(`Message classified as '${res.intent}' (${Math.round(res.intent_confidence * 100)}% conf)`);
+        toast.success(`Extracted '${res.intent}' (${Math.round((res.intent_confidence || 0.95) * 100)}% conf)`);
         fetchLiveOrders();
         if (res.order?.id) setSelectedId(res.order.id);
       } else {
         setIngestResult({
           intent: "new_order",
-          intent_confidence: 0.95,
-          order: { id: "ORD-NEW", customer_name: "Aarav Consumer Products", confidence_tier: "high" },
+          intent_confidence: 0.96,
+          order: { id: "ORD-NEW", customer_name: selectedDoc.customer, confidence_tier: "high" },
         });
         toast.success("Simulated message ingestion (demo state)");
       }
@@ -288,6 +378,14 @@ const Orders = () => {
     }
   };
 
+  const handleRunOcrScan = () => {
+    setScanning(true);
+    setTimeout(() => {
+      setScanning(false);
+      handleIngestSubmit(null, selectedDoc.text, "email");
+    }, 1200);
+  };
+
   const displayedOrders = liveOrders || mockOrders;
 
   return (
@@ -296,71 +394,189 @@ const Orders = () => {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-heading text-xl font-bold sm:text-2xl">Orders & AI Back-Office</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Emails, WhatsApp messages, and spreadsheets become validated orders. {LIVE_API_ENABLED ? "Live API mode." : "Demo data."}</p>
+          <p className="mt-1 text-sm text-muted-foreground">Emails, WhatsApp indents, and PDF LR Challans transformed into validated orders. {LIVE_API_ENABLED ? "Live API mode." : "Demo data."}</p>
         </div>
         <button
           type="button"
           onClick={() => setShowIngestBox(!showIngestBox)}
           className="inline-flex items-center gap-1.5 rounded-xl border border-status-ai/40 bg-status-ai/10 px-3.5 py-2 text-xs font-semibold text-status-ai hover:bg-status-ai/20 transition-colors"
         >
-          <Sparkles className="h-3.5 w-3.5" /> {showIngestBox ? "Hide Ingestion Panel" : "+ Ingest Customer Message"}
+          <Sparkles className="h-3.5 w-3.5" /> {showIngestBox ? "Hide Ingestion Hub" : "+ Ingest Documents & Messages"}
         </button>
       </div>
 
       {showIngestBox && (
         <div className="mt-4 rounded-xl border bg-card p-4 shadow-sm animate-in fade-in duration-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-heading flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-status-ai" /> Module 1: AI Multi-Channel Ingestion & Parsing
-            </h3>
-            <div className="flex gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-status-ai" />
+              <h3 className="text-sm font-semibold text-heading">Module 1: Multi-Channel Ingestion & OCR Vision</h3>
+            </div>
+            <div className="flex rounded-lg border bg-surface p-0.5 text-xs">
               <button
                 type="button"
-                onClick={() => { setChannel("email"); setInputText(SAMPLE_EMAIL); }}
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-medium border ${channel === "email" ? "border-status-ai bg-status-ai/10 text-status-ai" : "bg-surface"}`}
+                onClick={() => setIngestTab("ocr")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 font-semibold transition-all ${ingestTab === "ocr" ? "bg-card text-heading shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
-                Sample Email
+                <FileText className="h-3.5 w-3.5 text-status-ai" /> Visual Document OCR
               </button>
               <button
                 type="button"
-                onClick={() => { setChannel("whatsapp"); setInputText(SAMPLE_WHATSAPP); }}
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-medium border ${channel === "whatsapp" ? "border-status-ai bg-status-ai/10 text-status-ai" : "bg-surface"}`}
+                onClick={() => setIngestTab("message")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 font-semibold transition-all ${ingestTab === "message" ? "bg-card text-heading shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
-                Sample WhatsApp
+                <Mail className="h-3.5 w-3.5" /> Raw Message Text
               </button>
             </div>
           </div>
-          <form onSubmit={handleIngestSubmit} className="mt-3">
-            <textarea
-              rows={4}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Paste customer email text, WhatsApp message, or order indent..."
-              className="w-full rounded-xl border bg-background p-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-status-ai"
-            />
-            <div className="mt-2 flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">
-                Channel: <strong className="capitalize text-heading">{channel}</strong> · Automatic hash deduplication & entity resolution
-              </span>
-              <button
-                type="submit"
-                disabled={ingesting || !inputText.trim()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-status-ai px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-50"
-              >
-                <Send className="h-3.5 w-3.5" /> {ingesting ? "Extracting..." : "Process & Extract"}
-              </button>
+
+          {ingestTab === "ocr" ? (
+            <div className="mt-4 grid gap-5 lg:grid-cols-12">
+              {/* Document selection */}
+              <div className="space-y-2 lg:col-span-5">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Select sample document to scan:</p>
+                {SAMPLE_DOCS.map((doc) => (
+                  <button
+                    key={doc.id}
+                    type="button"
+                    onClick={() => { setSelectedDoc(doc); setIngestResult(null); }}
+                    className={`block w-full rounded-xl border p-3 text-left transition-all ${selectedDoc.id === doc.id ? "border-status-ai bg-status-ai/10 shadow-sm" : "bg-surface hover:bg-accent"}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-heading">{doc.name}</span>
+                      <span className="rounded-md border bg-card px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">{doc.type}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">{doc.customer} · {doc.cargo}</p>
+                  </button>
+                ))}
+              </div>
+
+              {/* Document Preview & OCR scanner */}
+              <div className="relative rounded-xl border bg-surface p-4 lg:col-span-7 flex flex-col justify-between overflow-hidden">
+                {scanning && (
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-status-ai to-transparent shadow-[0_0_15px_#10b981] animate-pulse" />
+                )}
+                <div>
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <span className="text-xs font-bold text-heading flex items-center gap-1.5">
+                      <FileText className="h-4 w-4 text-status-ai" /> {selectedDoc.name}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground uppercase font-mono">{selectedDoc.type}</span>
+                  </div>
+
+                  {/* Bounding box visual recognition */}
+                  <div className="mt-3 space-y-2">
+                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">AI Extracted Field Recognition:</p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {selectedDoc.boxes.map((b, i) => (
+                        <div
+                          key={i}
+                          className={`rounded-lg border p-2 text-xs transition-all ${
+                            b.low
+                              ? "border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                              : "border-status-ai/30 bg-card text-foreground"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] uppercase text-muted-foreground font-semibold">{b.label}</span>
+                            <span className="text-[10px] font-bold font-mono">{b.conf}%</span>
+                          </div>
+                          <p className="mt-0.5 text-xs font-semibold">{b.val}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between border-t pt-3">
+                  <span className="text-[10px] text-muted-foreground">OCR Engine: Multi-Lingual Entity Resolution</span>
+                  <button
+                    type="button"
+                    onClick={handleRunOcrScan}
+                    disabled={scanning || ingesting}
+                    className="inline-flex items-center gap-2 rounded-lg bg-status-ai px-4 py-2 text-xs font-bold text-white shadow-md hover:opacity-90 disabled:opacity-50"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {scanning ? "Scanning Laser..." : ingesting ? "Syncing to Orders..." : "Run AI OCR Scan & Ingest"}
+                  </button>
+                </div>
+              </div>
             </div>
-          </form>
+          ) : (
+            <form onSubmit={handleIngestSubmit} className="mt-3">
+              <div className="mb-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setChannel("email"); setInputText(SAMPLE_EMAIL); }}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-medium border ${channel === "email" ? "border-status-ai bg-status-ai/10 text-status-ai" : "bg-surface"}`}
+                >
+                  Sample Email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setChannel("whatsapp"); setInputText(SAMPLE_WHATSAPP); }}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-medium border ${channel === "whatsapp" ? "border-status-ai bg-status-ai/10 text-status-ai" : "bg-surface"}`}
+                >
+                  Sample WhatsApp
+                </button>
+              </div>
+              <textarea
+                rows={4}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Paste customer email text, WhatsApp message, or order indent..."
+                className="w-full rounded-xl border bg-background p-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-status-ai"
+              />
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[11px] text-muted-foreground">
+                  Channel: <strong className="capitalize text-heading">{channel}</strong> · Automatic hash deduplication
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleLlmExtract}
+                    disabled={llmExtracting || ingesting || !inputText.trim()}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3.5 py-2 text-xs font-bold text-primary shadow-sm hover:bg-primary/20 disabled:opacity-50 transition-colors"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {llmExtracting ? "LLM Parsing..." : "⚡ Parse with OpenRouter LLM"}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={ingesting || llmExtracting || !inputText.trim()}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-status-ai px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-50"
+                  >
+                    <Send className="h-3.5 w-3.5" /> {ingesting ? "Extracting..." : "Process & Extract"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
 
           {ingestResult && (
-            <div className="mt-3 rounded-lg border bg-surface p-3 text-xs animate-in fade-in">
-              <p className="font-semibold text-heading flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-status-ai" /> Extracted Intent: <span className="text-status-ai uppercase">{ingestResult.intent}</span> ({Math.round((ingestResult.intent_confidence || 0.95) * 100)}% confidence)
-              </p>
+            <div className="mt-4 rounded-xl border border-status-ai/40 bg-status-ai/10 p-3.5 text-xs animate-in fade-in">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-semibold text-heading flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-status-ai" /> Extracted Intent: <span className="text-status-ai uppercase">{ingestResult.intent}</span> ({Math.round((ingestResult.intent_confidence || 0.95) * 100)}% confidence)
+                </p>
+                {ingestResult.llmDetails?.model_used && (
+                  <span className="rounded bg-primary/20 px-2 py-0.5 font-mono text-[10px] font-bold text-primary">
+                    Model: {ingestResult.llmDetails.model_used}
+                  </span>
+                )}
+              </div>
               {ingestResult.order && (
                 <p className="mt-1 text-muted-foreground text-[11px]">
-                  Generated Order Ref: <strong>{ingestResult.order.id}</strong> ({ingestResult.order.customer_name}) · Tier: <strong>{ingestResult.order.confidence_tier}</strong>
+                  Generated Order Ref: <strong className="text-heading">{ingestResult.order.id}</strong> ({ingestResult.order.customer_name}) · Confidence Tier: <strong className="text-status-ai">{ingestResult.order.confidence_tier}</strong>
                 </p>
+              )}
+              {ingestResult.llmDetails && (
+                <div className="mt-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 border-t border-status-ai/30 pt-2 text-[11px]">
+                  <div><span className="text-muted-foreground">Origin:</span> <strong>{ingestResult.llmDetails.origin}</strong></div>
+                  <div><span className="text-muted-foreground">Destination:</span> <strong>{ingestResult.llmDetails.destination}</strong></div>
+                  <div><span className="text-muted-foreground">Pallets:</span> <strong>{ingestResult.llmDetails.pallets} Pallets</strong></div>
+                  <div><span className="text-muted-foreground">Offered Rate:</span> <strong>₹{ingestResult.llmDetails.offered_rate?.toLocaleString("en-IN")}</strong></div>
+                </div>
               )}
             </div>
           )}

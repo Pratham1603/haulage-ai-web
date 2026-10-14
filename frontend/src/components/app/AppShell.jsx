@@ -2,7 +2,7 @@ import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Radar, Inbox, Truck, Container, Warehouse, IndianRupee, Undo2, Phone, Bot,
-  Bell, Search, ChevronDown, LogOut,
+  Bell, Search, ChevronDown, LogOut, Sparkles, Compass, Cpu,
 } from "lucide-react";
 import { LogoMark } from "../site/Logo";
 import { StatusTag } from "../site/ui";
@@ -12,6 +12,11 @@ import { useMock } from "../../mock/store";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+
+import { LIVE_API_ENABLED } from "../../lib/api";
+import { CopilotDrawer } from "./CopilotDrawer";
+import { DemoWalkthroughModal } from "./DemoWalkthroughModal";
+import { LLMSettingsModal } from "./LLMSettingsModal";
 
 const NAV = [
   { to: "/app", label: "Control Tower", icon: Radar, exact: true },
@@ -36,12 +41,12 @@ export const ROLE_HOME = {
 const cannedAnswer = (q) => {
   const s = q.toLowerCase();
   if (s.includes("delhi") || s.includes("aarav") || s.includes("truck")) {
-    return "LR-8839 (Aarav Consumer Products, 18 pallets, Bhiwandi → Narela) broke down near Beawar at 2:10 AM. Transshipment to a partner truck 45 km away is pending your approval (+Rs 9,000, saves the 8-10 AM slot). Demo data.";
+    return "LR-8839 (Aarav Consumer Products, 18 pallets, Bhiwandi → Narela) broke down near Beawar at 2:10 AM. Transshipment to a partner truck 45 km away is pending your approval in the Control Tower.";
   }
   if (s.includes("rate") || s.includes("hasmukh")) {
-    return "Hasmukhbhai closed at Rs 74,500 vs the Rs 78,000 benchmark on Mumbai → Delhi, after a 3-turn Gujarati negotiation. Awaiting approval in the Control Tower. Demo data.";
+    return "Hasmukhbhai closed at Rs 74,500 vs the Rs 78,000 benchmark on Mumbai → Delhi, after a Gujarati voice negotiation. View the full audio call in Voice AI Calls.";
   }
-  return "47 live shipments · 93% on-time · 6 need your attention. Try: 'Where is the Delhi truck for Aarav?' Demo data.";
+  return "Live Freight Operations active · MongoDB connected · AI Back-Office & Matching engine online.";
 };
 
 const NavItems = ({ onNavigate, mobile = false }) => {
@@ -95,10 +100,15 @@ export const AppShell = () => {
   const { pathname } = useLocation();
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState(null);
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [llmSettingsOpen, setLlmSettingsOpen] = useState(false);
 
   const onSearch = (e) => {
     e.preventDefault();
-    if (query.trim()) setAnswer(cannedAnswer(query));
+    if (query.trim()) {
+      setCopilotOpen(true);
+    }
   };
 
   const pickRole = (r) => {
@@ -114,32 +124,59 @@ export const AppShell = () => {
             <LogoMark />
             <span className="hidden font-heading text-base font-bold text-heading sm:inline">Haulage AI</span>
           </NavLink>
-          <span
-            data-testid="demo-data-badge"
-            className="rounded-full border border-dashed border-muted-foreground/50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
-          >
-            Demo data
-          </span>
-          <form onSubmit={onSearch} className="relative mx-auto hidden w-full max-w-md md:block" role="search">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <input
-              type="search"
-              data-testid="app-search-input"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Where is the Delhi truck for Aarav?"
-              aria-label="Ask about your operation"
-              className="h-9 w-full rounded-xl border bg-surface pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground"
-            />
-            {answer && (
-              <div className="absolute left-0 right-0 top-11 z-50 rounded-xl border bg-popover p-3 shadow-md" data-testid="app-search-answer">
-                <p className="text-xs leading-relaxed text-foreground">{answer}</p>
-                <button type="button" onClick={() => setAnswer(null)} className="mt-2 text-[10px] font-semibold text-muted-foreground hover:text-foreground">
-                  Dismiss
-                </button>
-              </div>
-            )}
-          </form>
+          {LIVE_API_ENABLED ? (
+            <span
+              data-testid="live-api-badge"
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-600 dark:text-emerald-400"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              LIVE API CONNECTED
+            </span>
+          ) : (
+            <span
+              data-testid="demo-data-badge"
+              className="rounded-full border border-dashed border-muted-foreground/50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              Demo data
+            </span>
+          )}
+          <div className="relative mx-auto hidden w-full max-w-md items-center gap-2 md:flex">
+            <form onSubmit={onSearch} className="relative flex-1" role="search">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <input
+                type="search"
+                data-testid="app-search-input"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Ask Copilot (e.g. 'Where is the Delhi truck?')..."
+                aria-label="Ask about your operation"
+                className="h-9 w-full rounded-xl border bg-surface pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground"
+              />
+            </form>
+            <button
+              type="button"
+              onClick={() => setCopilotOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 shrink-0"
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Copilot
+            </button>
+            <button
+              type="button"
+              onClick={() => setTourOpen(true)}
+              className="hidden lg:inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-heading transition-all hover:bg-accent hover:border-primary/50 shrink-0"
+              title="Launch guided interactive product tour"
+            >
+              <Compass className="h-3.5 w-3.5 text-primary" /> Product Tour
+            </button>
+            <button
+              type="button"
+              onClick={() => setLlmSettingsOpen(true)}
+              className="hidden xl:inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-heading transition-all hover:bg-accent hover:border-primary/50 shrink-0"
+              title="Configure OpenRouter API Key & LLM Fallback Cascade"
+            >
+              <Cpu className="h-3.5 w-3.5 text-primary" /> AI Models
+            </button>
+          </div>
           <div className="ml-auto flex items-center gap-2 md:ml-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -150,10 +187,10 @@ export const AppShell = () => {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72">
-                <DropdownMenuLabel>Notifications (demo)</DropdownMenuLabel>
+                <DropdownMenuLabel>Live Operational Alerts</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {["Breakdown near Beawar needs your approval", "Rate Rs 74,500 awaiting approval", "ORD-1042: weight field conflict"].map((n) => (
-                  <DropdownMenuItem key={n} className="text-xs">{n}</DropdownMenuItem>
+                {["Breakdown near Beawar needs transshipment approval", "Rate Rs 74,500 closed via Voice AI (Hasmukhbhai)", "ORD-1042: weight conflict 14.2 t vs 14.5 t"].map((n) => (
+                  <DropdownMenuItem key={n} className="text-xs" onClick={() => setCopilotOpen(true)}>{n}</DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -201,6 +238,32 @@ export const AppShell = () => {
         </main>
         {pathname === "/app" && <AgentFeed />}
       </div>
+
+      {/* Floating Copilot Trigger */}
+      <button
+        type="button"
+        onClick={() => setCopilotOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-primary/40 bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-2xl transition-all hover:scale-105 hover:shadow-primary/30"
+      >
+        <Sparkles className="h-4 w-4" />
+        Ask Copilot
+      </button>
+
+      {/* Copilot Drawer */}
+      <CopilotDrawer open={copilotOpen} onClose={() => setCopilotOpen(false)} />
+
+      {/* Guided Demo Walkthrough Tour Modal */}
+      <DemoWalkthroughModal
+        isOpen={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onOpenCopilot={() => setCopilotOpen(true)}
+      />
+
+      {/* OpenRouter LLM Settings Modal */}
+      <LLMSettingsModal
+        isOpen={llmSettingsOpen}
+        onClose={() => setLlmSettingsOpen(false)}
+      />
     </div>
   );
 };

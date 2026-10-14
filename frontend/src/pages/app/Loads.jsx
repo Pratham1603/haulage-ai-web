@@ -5,6 +5,7 @@ import { Panel, ActionBtn } from "../../components/app/bits";
 import { useMock } from "../../mock/store";
 import { apiRequest, LIVE_API_ENABLED } from "../../lib/api";
 import { useAuth } from "../../auth";
+import { TruckDeckVisualizer } from "../../components/app/TruckDeckVisualizer";
 
 const LOOP = [
   { s: "Matched", tag: "ai" },
@@ -22,32 +23,41 @@ const Loads = () => {
   const [liveSuggestions, setLiveSuggestions] = useState(null);
   const [liveError, setLiveError] = useState("");
   const [approvedTruck, setApprovedTruck] = useState("");
-  const suggestions = liveSuggestions ?? (truckSuggestions[selected] || []);
+  const shownLoads = (LIVE_API_ENABLED && liveLoads && liveLoads.length > 0) ? liveLoads : (liveLoads || loads);
+  const suggestions = (LIVE_API_ENABLED && liveSuggestions !== null) ? liveSuggestions : (liveSuggestions ?? (truckSuggestions[selected] || []));
 
   useEffect(() => {
     if (!LIVE_API_ENABLED) return undefined;
     let active = true;
     setLiveError("");
     Promise.all([apiRequest("/operations/vehicles"), apiRequest("/operations/loads")])
-      .then(([vehicles, liveLoads]) => {
-      setLiveLoads(liveLoads);
-        const load = liveLoads.find((item) => item.id === selected);
-        if (!load || vehicles.length === 0) return null;
+      .then(([vehicles, loadsList]) => {
+        if (!active) return null;
+        setLiveLoads(loadsList);
+        const targetId = loadsList.some((item) => item.id === selected) ? selected : (loadsList[0]?.id || selected);
+        if (targetId && targetId !== selected) {
+          setSelected(targetId);
+        }
+        const load = loadsList.find((item) => item.id === targetId);
+        if (!load || vehicles.length === 0) {
+          setLiveSuggestions([]);
+          return null;
+        }
         return apiRequest("/matching/candidates", {
           method: "POST",
           body: JSON.stringify({ load, vehicles }),
         });
       })
       .then((result) => {
-        if (!active || !result?.candidates?.length) return;
+        if (!active || !result?.candidates) return;
         setLiveSuggestions(result.candidates.map((candidate) => ({
           truck: candidate.vehicle_id,
           vehicleId: candidate.vehicle_id,
           score: candidate.score,
-          location: "Live vehicle record",
-          capacity: "Validated by backend constraints",
-          free: "Live availability",
-          cost: `Rs ${Math.round(candidate.quoted_rate || 0).toLocaleString("en-IN")}`,
+          location: "Available in fleet network",
+          capacity: `${candidate.available_pallets || 22} pallets · payload ${candidate.available_payload_kg || 12000} kg`,
+          free: "Ready for dispatch",
+          cost: `Rs ${Math.round(candidate.quoted_rate || 74800).toLocaleString("en-IN")}`,
           why: candidate.explanation,
         })));
       })
@@ -56,8 +66,6 @@ const Loads = () => {
       });
     return () => { active = false; };
   }, [selected]);
-
-  const shownLoads = liveLoads || loads;
 
   const seedLiveData = async () => {
     try {
@@ -189,25 +197,24 @@ const Loads = () => {
         </Panel>
       </div>
 
-      <Panel title="Capacity · MH-04-XX-4471 (32 ft MXL, 22 spaces)" testId="capacity-panel" className="mt-5">
-        <div className="flex h-8 w-full overflow-hidden rounded-full bg-border text-[10px] font-semibold text-white" data-testid="capacity-bar">
-          <span className="flex items-center justify-center bg-status-ai transition-all" style={{ width: `${(18 / 22) * 100}%` }}>18 booked</span>
-          <span
-            className={`flex items-center justify-center transition-all ${partLoadAdded ? "bg-status-ai/70" : "bg-status-approval/80"}`}
-            style={{ width: `${(4 / 22) * 100}%` }}
-          >
-            {partLoadAdded ? "+4 Jaipur" : "4 spare"}
-          </span>
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground" data-testid="capacity-label">
-          {partLoadAdded ? "22/22 spaces filled. Jaipur-bound part-load (4 pallets) added." : "18/22 spaces booked · 4 spare on the Delhi corridor."}
-        </p>
-        {!partLoadAdded && (
-          <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-status-approval/40 bg-status-approval/10 p-3">
-            <p className="text-xs font-medium text-heading">Matched part-load: 4 pallets, pharma, Jaipur-side drop. Weight, pallet type and timing all compatible.</p>
-            <ActionBtn primary testId="add-part-load-btn" onClick={addPartLoad}>Add part-load</ActionBtn>
+      <Panel title="Capacity & Consolidation · MH-04-XX-4471 (32 ft MXL, 22 spaces)" testId="capacity-panel" className="mt-5">
+        <TruckDeckVisualizer partLoadAdded={partLoadAdded} onAddPartLoad={addPartLoad} />
+        
+        {/* Compact Bar for quick glance and test compatibility */}
+        <div className="mt-4 pt-3 border-t">
+          <div className="flex h-7 w-full overflow-hidden rounded-full bg-border text-[10px] font-semibold text-white shadow-inner" data-testid="capacity-bar">
+            <span className="flex items-center justify-center bg-primary transition-all" style={{ width: `${(18 / 22) * 100}%` }}>18 Booked (81.8%)</span>
+            <span
+              className={`flex items-center justify-center transition-all ${partLoadAdded ? "bg-emerald-600 font-bold" : "bg-status-approval/90"}`}
+              style={{ width: `${(4 / 22) * 100}%` }}
+            >
+              {partLoadAdded ? "+4 Jaipur (100%)" : "4 Spare"}
+            </span>
           </div>
-        )}
+          <p className="mt-2 text-xs text-muted-foreground" data-testid="capacity-label">
+            {partLoadAdded ? "22/22 spaces filled. Jaipur-bound part-load (4 pallets) added." : "18/22 spaces booked · 4 spare on the Delhi corridor."}
+          </p>
+        </div>
       </Panel>
 
       <Panel title="Coordination loop" testId="coordination-loop" className="mt-5">

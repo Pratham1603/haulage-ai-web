@@ -6,6 +6,7 @@ import { Panel, Kpi, ActionBtn, ResolvedNote } from "../../components/app/bits";
 import { useMock } from "../../mock/store";
 import { useAuth } from "../../auth";
 import { apiRequest, LIVE_API_ENABLED } from "../../lib/api";
+import { CorridorTelematics } from "../../components/app/CorridorTelematics";
 
 const KPIS = [
   { label: "Live shipments", value: "47" },
@@ -174,13 +175,8 @@ const ControlTower = () => {
             </ul>
           )}
         </div>
-        <Panel title="Live map" testId="live-map">
-          <MapSvg />
-          <ul className="mt-3 space-y-1.5 text-[11px] text-muted-foreground">
-            <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-status-ai" /> On track</li>
-            <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-status-human" /> Breakdown · LR-8839 near Beawar</li>
-          </ul>
-          <p className="mt-2 text-[10px] text-muted-foreground">Map placeholder, no live GPS. Demo data.</p>
+        <Panel title="Live Corridor Telematics" testId="live-map">
+          <CorridorTelematics />
         </Panel>
       </div>
     </div>

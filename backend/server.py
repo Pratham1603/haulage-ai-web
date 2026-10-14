@@ -15,7 +15,9 @@ from time import perf_counter
 import hmac
 import json
 import jwt
+import importlib
 from passlib.context import CryptContext
+
 try:
     from .matching import propose_spare_capacity, rank_candidates
     from .voice import ElevenLabsSpeechProvider, VoiceTaskManager, VoiceTaskState
@@ -25,6 +27,7 @@ try:
     from .orders import OrderManager, OrderValidator, OrderOperationalStatus, ConfidenceTier
     from .tracking_notifications import NotificationDispatcher, CustomerQueryResolver, ShipmentMilestone, MilestoneRecord
     from .exceptions_queue import ExceptionManager, ExceptionCategory
+    from . import llm_service
 except ImportError:
     from matching import propose_spare_capacity, rank_candidates
     from voice import ElevenLabsSpeechProvider, VoiceTaskManager, VoiceTaskState
@@ -34,9 +37,16 @@ except ImportError:
     from orders import OrderManager, OrderValidator, OrderOperationalStatus, ConfidenceTier
     from tracking_notifications import NotificationDispatcher, CustomerQueryResolver, ShipmentMilestone, MilestoneRecord
     from exceptions_queue import ExceptionManager, ExceptionCategory
+    import llm_service
+
+importlib.reload(llm_service)
+copilot_llm_query = llm_service.copilot_llm_query
+parse_unstructured_indent = llm_service.parse_unstructured_indent
+negotiate_carrier_turn = llm_service.negotiate_carrier_turn
+get_model_cascade = llm_service.get_model_cascade
 
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / ".env")
+load_dotenv(ROOT_DIR / ".env", override=True)
 
 mongo_url = os.getenv("MONGO_URL", "").strip()
 if not mongo_url:
@@ -220,6 +230,58 @@ class AuthLoginRequest(BaseModel):
     password: str = Field(min_length=1)
 
 
+class FleetDriverUpdateRequest(BaseModel):
+    truck: str = Field(min_length=1)
+    status: str = Field(min_length=1)
+    location: Optional[str] = None
+    next_free: Optional[str] = None
+
+
+class PalletFixRequest(BaseModel):
+    fix_note: Optional[str] = None
+
+
+class InvoiceResolveRequest(BaseModel):
+    action: str = Field(min_length=1)  # "approve" or "dispute"
+    notes: Optional[str] = None
+
+
+class CopilotQueryRequest(BaseModel):
+    query: str = Field(min_length=1)
+    api_key: Optional[str] = None
+    model: Optional[str] = None
+
+
+class UnstructuredIndentRequest(BaseModel):
+    raw_text: str = Field(min_length=1)
+    api_key: Optional[str] = None
+    model: Optional[str] = None
+    auto_create_order: bool = False
+
+
+class NegotiationTurnRequest(BaseModel):
+    carrier_message: str = Field(min_length=1)
+    history: List[dict] = Field(default_factory=list)
+    target_rate: int = 74500
+    ceiling_rate: int = 80000
+    benchmark_rate: int = 78000
+    api_key: Optional[str] = None
+    model: Optional[str] = None
+
+
+class LLMConfigUpdateRequest(BaseModel):
+    api_key: Optional[str] = None
+    primary_model: Optional[str] = None
+
+
+class SarvamTTSRequest(BaseModel):
+    text: str = Field(min_length=1)
+    language_code: str = "hi-IN"
+    speaker: Optional[str] = None
+    pitch: Optional[float] = None
+    pace: Optional[float] = None
+
+
 LOAD_STATUSES = {"proposed", "matched", "assigned", "dispatched", "in_transit", "delivered", "cancelled"}
 ASSIGNMENT_STATUSES = {"confirmed", "dispatched", "in_transit", "delivered", "cancelled"}
 SEED_MARKER = "haulage-ai-demo-v1"
@@ -381,7 +443,11 @@ async def me(user: Mapping[str, Any] = Depends(get_current_user)):
 
 @api_router.get("/operations/loads")
 async def list_operation_loads(_: str = Depends(require_roles("owner", "ops_manager", "dispatcher"))):
-    return await db.loads.find({}, {"_id": 0}).to_list(1000)
+    loads = await db.loads.find({}, {"_id": 0}).to_list(1000)
+    if not loads:
+        await seed_demo_data(_)
+        loads = await db.loads.find({}, {"_id": 0}).to_list(1000)
+    return loads
 
 
 @api_router.post("/operations/demo/seed")
@@ -441,7 +507,11 @@ async def save_operation_load(input: dict[str, Any], _: str = Depends(require_ro
 
 @api_router.get("/operations/vehicles")
 async def list_operation_vehicles(_: str = Depends(require_roles("owner", "ops_manager", "dispatcher", "warehouse_lead"))):
-    return await db.vehicles.find({}, {"_id": 0}).to_list(1000)
+    vehicles = await db.vehicles.find({}, {"_id": 0}).to_list(1000)
+    if not vehicles:
+        await seed_demo_data(_)
+        vehicles = await db.vehicles.find({}, {"_id": 0}).to_list(1000)
+    return vehicles
 
 
 @api_router.post("/operations/vehicles", status_code=201)
@@ -455,12 +525,274 @@ async def save_operation_vehicle(input: dict[str, Any], _: str = Depends(require
 
 @api_router.get("/operations/calls")
 async def list_operation_calls(_: str = Depends(require_roles("owner", "ops_manager", "dispatcher"))):
-    return await db.voice_calls.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    calls = await db.voice_calls.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    if not calls:
+        now = _now()
+        default_call = {
+            "task_id": "call-1",
+            "state": "completed",
+            "created_at": now,
+            "updated_at": now,
+            "result": {
+                "carrier_id": "carrier-hasmukh",
+                "load_id": "LD-201",
+                "quoted_rate": 74500,
+                "language": "Gujarati",
+                "contact": "Hasmukhbhai · truck owner, Ahmedabad",
+                "summary": "Rate closed at Rs 74,500 (benchmark Rs 78,000)",
+                "duration": "03:14",
+                "transcript": {
+                    "title": "Rate negotiation · Mumbai → Delhi · benchmark Rs 78,000",
+                    "lines": [
+                        {"who": "AI", "native": "નમસ્તે હસમુખભાઈ, તમારી ગાડી અત્યારે ક્યાં છે?", "en": "Hello Hasmukhbhai, where is your truck right now?"},
+                        {"who": "Hasmukhbhai", "native": "ગાડી અમદાવાદમાં ખાલી છે. કાલે લોડ થઈ શકે.", "en": "The truck is empty in Ahmedabad. It can load tomorrow."},
+                        {"who": "AI", "native": "₹74,500 ભાડું ચાલશે?", "en": "Will a rate of Rs 74,500 work?"},
+                        {"who": "Hasmukhbhai", "native": "ઠીક છે, કન્ફર્મ કરો.", "en": "Fine, confirm it."}
+                    ],
+                    "outcome": "Closed at Rs 74,500, under the Rs 78,000 benchmark. Booking confirmed."
+                }
+            }
+        }
+        await db.voice_calls.insert_one(default_call)
+        default_call.pop("_id", None)
+        calls = [default_call]
+    return calls
 
 
 @api_router.get("/operations/audit")
 async def list_operation_audit(_: str = Depends(require_roles("owner", "ops_manager", "finance"))):
     return await db.audit_events.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+
+
+DEFAULT_FLEET = [
+    {"truck": "MH-04-XX-1234", "driver": "Ramesh Yadav", "location": "Beawar (breakdown)", "status": "human", "utilisation": 82, "nextFree": "After repair"},
+    {"truck": "MH-04-XX-4471", "driver": "Suresh Patel", "location": "Bhiwandi", "status": "ai", "utilisation": 91, "nextFree": "Today 4 PM"},
+    {"truck": "GJ-01-YY-5678", "driver": "Hasmukhbhai's fleet", "location": "Vapi", "status": "ai", "utilisation": 88, "nextFree": "Today 6 PM"},
+    {"truck": "MH-46-ZZ-9012", "driver": "Imran (standby)", "location": "Bhiwandi", "status": "ai", "utilisation": 64, "nextFree": "Now"},
+    {"truck": "RJ-14-XX-3321", "driver": "Partner truck", "location": "Beawar, 45 km", "status": "approval", "utilisation": 77, "nextFree": "On approval"},
+    {"truck": "MH-12-XX-7788", "driver": "Devendra Singh", "location": "Narela", "status": "ai", "utilisation": 85, "nextFree": "Fri 7 AM"},
+]
+
+DEFAULT_PALLETS = [
+    {"id": 1, "status": "pass", "tag": "ai", "checks": {"label": True, "barcode": True, "cartons": True, "seal": True, "height": True}},
+    {"id": 3, "status": "pass", "tag": "ai", "checks": {"label": True, "barcode": True, "cartons": True, "seal": True, "height": True}},
+    {"id": 7, "status": "fail", "tag": "human", "flag": "Height 1.8 m exceeds 1.6 m rule", "fix": "Move top layer (6 cartons, SKU-A31) to pallet 9.", "checks": {"label": True, "barcode": True, "cartons": True, "seal": True, "height": False}},
+    {"id": 9, "status": "pass", "tag": "ai", "checks": {"label": True, "barcode": True, "cartons": True, "seal": True, "height": True}},
+    {"id": 12, "status": "fail", "tag": "human", "flag": "Label on one side only", "fix": "Print second SSCC label and apply to adjacent face.", "checks": {"label": False, "barcode": True, "cartons": True, "seal": True, "height": True}},
+]
+
+DEFAULT_INVOICES = [
+    {"id": "INV-2211", "line": "Detention, Bhiwandi · 5 hrs claimed", "contract": "2 hrs beyond free time (gate log)", "actual": "Rs 4,500", "variance": "Rs 3,600", "evidence": "Gate timestamps", "tag": "approval"},
+    {"id": "INV-2209", "line": "Freight, Mumbai → Delhi", "contract": "Rs 68,000", "actual": "Rs 68,000", "variance": "—", "evidence": "Contract matched", "tag": "ai"},
+    {"id": "INV-2204", "line": "Freight, Bhiwandi → Pune", "contract": "Rs 71,500", "actual": "Rs 71,500 (billed twice)", "variance": "Duplicate", "evidence": "PO + ledger", "tag": "human"},
+    {"id": "INV-2201", "line": "Loading charge", "contract": "Included in rate", "actual": "Rs 1,500", "variance": "+Rs 1,500", "evidence": "Rate card p.2", "tag": "approval"},
+]
+
+
+@api_router.get("/operations/fleet")
+async def list_fleet():
+    docs = await db.fleet.find({}, {"_id": 0}).to_list(100)
+    if not docs:
+        for f in DEFAULT_FLEET:
+            await db.fleet.replace_one({"truck": f["truck"]}, f, upsert=True)
+        docs = await db.fleet.find({}, {"_id": 0}).to_list(100)
+    return docs
+
+
+@api_router.post("/operations/fleet/update")
+async def update_fleet_driver(input: FleetDriverUpdateRequest):
+    update_data = {"status": input.status, "updated_at": _now()}
+    if input.location:
+        update_data["location"] = input.location
+    if input.next_free:
+        update_data["nextFree"] = input.next_free
+    await db.fleet.update_one({"truck": input.truck}, {"$set": update_data})
+    await _write_audit("fleet_status_updated", input.truck, status=input.status)
+    doc = await db.fleet.find_one({"truck": input.truck}, {"_id": 0})
+    return doc or {"status": "ok"}
+
+
+@api_router.get("/operations/warehouse/pallets")
+async def list_warehouse_pallets():
+    docs = await db.pallets.find({}, {"_id": 0}).to_list(100)
+    if not docs:
+        for p in DEFAULT_PALLETS:
+            await db.pallets.replace_one({"id": p["id"]}, p, upsert=True)
+        docs = await db.pallets.find({}, {"_id": 0}).to_list(100)
+    return docs
+
+
+@api_router.post("/operations/warehouse/pallets/{pallet_id}/fix")
+async def fix_warehouse_pallet(pallet_id: int, input: PalletFixRequest):
+    updated = {
+        "status": "pass",
+        "tag": "ai",
+        "flag": None,
+        "checks": {"label": True, "barcode": True, "cartons": True, "seal": True, "height": True},
+        "fixed_at": _now(),
+        "fix_note": input.fix_note or "Marked fixed and re-scanned",
+    }
+    await db.pallets.update_one({"id": pallet_id}, {"$set": updated})
+    await _write_audit("pallet_fixed_and_passed", f"pallet-{pallet_id}", fix_note=input.fix_note)
+    doc = await db.pallets.find_one({"id": pallet_id}, {"_id": 0})
+    return doc or updated
+
+
+@api_router.get("/operations/finance/invoices")
+async def list_finance_invoices():
+    docs = await db.invoices.find({}, {"_id": 0}).to_list(100)
+    if not docs:
+        for inv in DEFAULT_INVOICES:
+            await db.invoices.replace_one({"id": inv["id"]}, inv, upsert=True)
+        docs = await db.invoices.find({}, {"_id": 0}).to_list(100)
+    return docs
+
+
+@api_router.post("/operations/finance/invoices/{invoice_id}/resolve")
+async def resolve_finance_invoice(invoice_id: str, input: InvoiceResolveRequest):
+    tag = "ai" if input.action == "approve" else "approval"
+    resolved_text = "Correction approved" if input.action == "approve" else "Dispute filed with carrier"
+    updated = {
+        "tag": tag,
+        "resolved": resolved_text,
+        "resolved_at": _now(),
+        "resolution_notes": input.notes or "",
+    }
+    await db.invoices.update_one({"id": invoice_id}, {"$set": updated})
+    await _write_audit("invoice_resolved", invoice_id, action=input.action, resolution=resolved_text)
+    doc = await db.invoices.find_one({"id": invoice_id}, {"_id": 0})
+    return doc or updated
+
+
+@api_router.post("/copilot/query")
+async def copilot_query(input: CopilotQueryRequest):
+    loads = await db.loads.find({}, {"_id": 0}).to_list(50)
+    orders = await db.orders.find({}, {"_id": 0}).to_list(50)
+    exceptions = await db.exceptions.find({"status": {"$ne": "resolved"}}, {"_id": 0}).to_list(50)
+    voice_calls = await db.voice_calls.find({}, {"_id": 0}).sort("created_at", -1).to_list(10)
+
+    live_context = {
+        "loads": loads,
+        "orders": orders,
+        "exceptions": exceptions,
+        "calls": voice_calls,
+    }
+
+    result = await copilot_llm_query(
+        question=input.query,
+        live_context=live_context,
+        api_key=input.api_key,
+        preferred_model=input.model,
+    )
+    return result
+
+
+@api_router.post("/operations/llm/parse-indent")
+async def parse_unstructured_indent_endpoint(input: UnstructuredIndentRequest):
+    parsed = await parse_unstructured_indent(
+        raw_text=input.raw_text,
+        api_key=input.api_key,
+        preferred_model=input.model,
+    )
+
+    if input.auto_create_order:
+        new_order_id = f"ORD-{int(perf_counter() * 1000) % 9000 + 1000}"
+        order_doc = {
+            "id": new_order_id,
+            "customer": parsed.get("customer", "Direct Indent Customer"),
+            "route": f"{parsed.get('origin', 'Bhiwandi')} → {parsed.get('destination', 'Narela')}",
+            "source": "WhatsApp / Natural Indent",
+            "confidence": parsed.get("confidence", 95),
+            "tag": "ai" if parsed.get("confidence", 95) >= 90 else "approval",
+            "details": parsed,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.orders.insert_one(order_doc)
+        order_doc.pop("_id", None)
+        parsed["created_order"] = order_doc
+
+    return parsed
+
+
+@api_router.post("/operations/llm/negotiate-turn")
+async def negotiate_carrier_turn_endpoint(input: NegotiationTurnRequest):
+    result = await negotiate_carrier_turn(
+        carrier_message=input.carrier_message,
+        conversation_history=input.history,
+        benchmark_rate=input.benchmark_rate,
+        ceiling_rate=input.ceiling_rate,
+        target_rate=input.target_rate,
+        api_key=input.api_key,
+        preferred_model=input.model,
+    )
+    return result
+
+
+@api_router.get("/operations/llm/config")
+async def get_llm_config():
+    api_key = os.getenv("OPENROUTER_API_KEY", "")
+    primary = os.getenv("OPENROUTER_MODEL", "nvidia/llama-3.1-nemotron-70b-instruct:free")
+    cascade = get_model_cascade()
+    return {
+        "has_api_key": bool(api_key.strip()),
+        "key_preview": f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else "Not configured",
+        "primary_model": primary,
+        "fallback_models": [m for m in cascade if m != primary],
+        "all_cascade_models": cascade,
+        "status": "ready_with_cascade",
+    }
+
+
+@api_router.post("/operations/llm/config")
+async def update_llm_config(input: LLMConfigUpdateRequest):
+    if input.api_key is not None:
+        os.environ["OPENROUTER_API_KEY"] = input.api_key.strip()
+    if input.primary_model is not None:
+        os.environ["OPENROUTER_MODEL"] = input.primary_model.strip()
+
+    cascade = get_model_cascade()
+    return {
+        "success": True,
+        "has_api_key": bool(os.getenv("OPENROUTER_API_KEY", "").strip()),
+        "primary_model": os.getenv("OPENROUTER_MODEL", "nvidia/llama-3.1-nemotron-70b-instruct:free"),
+        "cascade": cascade,
+    }
+
+
+@api_router.post("/voice/sarvam/tts")
+async def sarvam_text_to_speech(input: SarvamTTSRequest):
+    sarvam_key = os.getenv("SARVAM_API_KEY", "").strip()
+    if not sarvam_key:
+        return {"success": False, "fallback_to_browser": True, "reason": "No SARVAM_API_KEY configured in environment"}
+
+    # All Indian language codes supported by Sarvam AI Bulbul TTS
+    valid_langs = {"bn-IN", "en-IN", "gu-IN", "hi-IN", "kn-IN", "ml-IN", "mr-IN", "od-IN", "pa-IN", "ta-IN", "te-IN"}
+    lang = input.language_code if input.language_code in valid_langs else "hi-IN"
+
+    try:
+        from sarvamai import SarvamAI
+        client = SarvamAI(api_subscription_key=sarvam_key)
+        kwargs = {"text": input.text, "language_code": lang}
+        if input.speaker:
+            kwargs["speaker"] = input.speaker
+        if input.pitch is not None:
+            kwargs["pitch"] = input.pitch
+        if input.pace is not None:
+            kwargs["pace"] = input.pace
+
+        # Call Sarvam AI text_to_speech SDK
+        res = client.text_to_speech.convert(**kwargs)
+        if hasattr(res, "audios") and res.audios:
+            return {
+                "success": True,
+                "audio_base64": res.audios[0],
+                "language_code": lang,
+                "provider": "sarvamai",
+            }
+        return {"success": False, "fallback_to_browser": True, "reason": "Empty audio response from Sarvam"}
+    except Exception as e:
+        logger.warning(f"Sarvam AI TTS error: {e}")
+        return {"success": False, "fallback_to_browser": True, "reason": str(e)}
 
 
 @api_router.post("/quotes", status_code=201)
