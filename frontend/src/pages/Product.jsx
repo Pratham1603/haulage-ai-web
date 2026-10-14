@@ -101,12 +101,12 @@ const Product = () => (
           sub="You set the limits. Everything is tagged, logged and reversible."
           testId="hitl-heading"
         />
-        <div className="grid gap-5 lg:grid-cols-3" data-testid="hitl-grid">
+        <div className="grid gap-5 lg:grid-cols-3 stagger-list" data-testid="hitl-grid">
           {HITL.map((h) => (
-            <div key={h.variant} className="rounded-xl border bg-card p-6 shadow-sm">
+            <div key={h.variant} className="card-craft p-6">
               <StatusTag variant={h.variant} />
-              <h3 className="mt-4 text-base font-semibold">{h.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{h.text}</p>
+              <h3 className="mt-4 text-base font-semibold text-heading">{h.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{h.text}</p>
             </div>
           ))}
         </div>

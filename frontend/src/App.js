@@ -20,6 +20,7 @@ import Finance from "@/pages/app/Finance";
 import Returns from "@/pages/app/Returns";
 import Calls from "@/pages/app/Calls";
 import Agents from "@/pages/app/Agents";
+import Analytics from "@/pages/app/Analytics";
 
 const COMING = [
   { path: "/solutions", title: "Solutions" },
@@ -74,6 +75,7 @@ function App() {
               <Route path="returns" element={<Returns />} />
               <Route path="calls" element={<Calls />} />
               <Route path="agents" element={<Agents />} />
+              <Route path="analytics" element={<Analytics />} />
             </Route>
             {COMING.map((r) => (
               <Route key={r.path} path={r.path} element={<ComingNext title={r.title} />} />

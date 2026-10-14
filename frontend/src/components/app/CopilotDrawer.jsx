@@ -88,44 +88,44 @@ export const CopilotDrawer = ({ open, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm transition-opacity">
-      <div className="relative flex h-full w-full max-w-lg flex-col border-l bg-card shadow-2xl transition-all">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs transition-opacity animate-fade-in">
+      <div className="animate-slide-right relative flex h-full w-full max-w-lg flex-col border-l border-border bg-card shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-5 py-4">
+        <div className="flex items-center justify-between border-b border-border/80 px-5 py-4 bg-surface/50 backdrop-blur-xs">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <Bot className="h-4 w-4" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+              <Bot className="h-4.5 w-4.5" />
             </div>
             <div>
               <h2 className="font-heading text-sm font-bold text-heading flex items-center gap-2">
                 Operations Copilot
-                <span className="rounded-full border border-status-ai/40 bg-status-ai/10 px-2 py-0.5 text-[10px] font-semibold text-status-ai flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" /> Live
+                <span className="rounded-full border border-status-ai/40 bg-status-ai/10 px-2 py-0.5 text-[10px] font-bold text-status-ai flex items-center gap-1 font-mono">
+                  <span className="sonar-ping h-1.5 w-1.5 rounded-full bg-status-ai" /> Live
                 </span>
               </h2>
-              <p className="text-[11px] text-muted-foreground">Contextual intelligence across Modules 1, 2, & 3</p>
+              <p className="text-[11px] text-muted-foreground">Autonomous Intelligence · Multi-Agent Back-Office</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close Copilot"
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-lg border border-border/60 bg-surface/80 p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Quick Prompts Bar */}
-        <div className="border-b bg-surface px-4 py-2.5">
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Quick queries:</p>
+        <div className="border-b border-border/60 bg-surface/60 px-4 py-2.5">
+          <p className="mb-1.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground font-mono">Quick queries:</p>
           <div className="flex flex-wrap gap-1.5">
             {QUICK_PROMPTS.map((p, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleSend(p)}
-                className="rounded-lg border bg-card px-2.5 py-1 text-left text-[11px] text-muted-foreground transition-all hover:border-primary/40 hover:bg-accent hover:text-heading"
+                className="btn-tactile-secondary rounded-lg border border-border/80 bg-card px-2.5 py-1 text-left font-mono text-[11px] text-muted-foreground transition-all hover:border-primary/40 hover:text-heading"
               >
                 {p}
               </button>
@@ -134,7 +134,7 @@ export const CopilotDrawer = ({ open, onClose }) => {
         </div>
 
         {/* Messages Chat Area */}
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="flex-1 space-y-4 overflow-y-auto p-4 stagger-list">
           {messages.map((m, idx) => (
             <div
               key={idx}
@@ -143,8 +143,8 @@ export const CopilotDrawer = ({ open, onClose }) => {
               <div
                 className={`max-w-[92%] rounded-2xl p-3.5 text-xs leading-relaxed ${
                   m.role === "user"
-                    ? "bg-primary text-primary-foreground font-medium"
-                    : "border bg-surface text-foreground shadow-sm"
+                    ? "btn-tactile bg-primary text-primary-foreground font-medium shadow-xs"
+                    : "card-craft p-4 bg-surface/70 text-foreground shadow-xs border-l-4 border-l-primary/60"
                 }`}
               >
                 <div className="space-y-2 whitespace-pre-line">{m.text}</div>

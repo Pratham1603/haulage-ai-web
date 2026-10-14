@@ -111,21 +111,34 @@ const Finance = () => {
                 ))}
               </tr>
             </thead>
-            <tbody>
-              {invoiceList.map((inv) => (
-                <tr key={inv.id} className={`border-b last:border-0 ${inv.variance !== "—" ? "bg-status-approval/5" : ""}`} data-testid={`invoice-${inv.id}`}>
+            <tbody className="stagger-list">
+              {invoiceList.map((inv, i) => (
+                <tr
+                  key={inv.id}
+                  className={`border-b border-border/60 last:border-0 hover:bg-surface/60 transition-colors ${
+                    inv.variance !== "—" ? "bg-status-approval/5" : ""
+                  }`}
+                  data-testid={`invoice-${inv.id}`}
+                  style={{ animation: `rise 0.35s cubic-bezier(0.25,1,0.5,1) ${i * 45}ms both` }}
+                >
                   <td className="px-4 py-3">
-                    <span className="font-medium text-heading">{inv.id}</span>
+                    <span className="font-mono text-xs font-bold text-heading">{inv.id}</span>
                     <span className="block text-xs text-muted-foreground">{inv.line}</span>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{inv.contract}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{inv.actual}</td>
-                  <td className="px-4 py-3 font-medium text-heading">{inv.variance}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground underline-offset-2">{inv.evidence}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{inv.contract}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{inv.actual}</td>
+                  <td className="px-4 py-3 font-mono text-xs font-bold text-heading">{inv.variance}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 font-mono text-[11px] bg-surface px-2 py-0.5 rounded border border-border/60">
+                      {inv.evidence}
+                    </span>
+                  </td>
                   <td className="px-4 py-3"><StatusTag variant={inv.tag} /></td>
                   <td className="px-4 py-3">
                     {inv.resolved ? (
-                      <span className="text-xs font-medium text-status-ai">{inv.resolved}</span>
+                      <span className="text-xs font-semibold text-status-ai flex items-center gap-1">
+                        ✓ {inv.resolved}
+                      </span>
                     ) : inv.tag !== "ai" ? (
                       <div className="flex gap-2">
                         <ActionBtn
@@ -151,22 +164,22 @@ const Finance = () => {
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          INV-2211: carrier claims 5 hours of detention at Bhiwandi; gate timestamps show 2 hours beyond free time. Variance Rs 3,600.
+        <p className="mt-3 text-xs text-muted-foreground bg-surface/60 p-2.5 rounded-lg border border-border/50">
+          <strong className="text-heading">Evidence Note:</strong> INV-2211: carrier claims 5 hours of detention at Bhiwandi; gate timestamps show 2 hours beyond free time. Variance Rs 3,600 automatically audited against FASTag and Gate RFID logs.
         </p>
       </Panel>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Panel title="Receivables aging" testId="receivables">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 stagger-list">
             {AGING.map((a) => (
-              <div key={a.k} className="rounded-xl border bg-surface p-4 text-center">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{a.k}</p>
-                <p className="mt-1 font-heading text-lg font-bold text-heading">{a.v}</p>
+              <div key={a.k} className="card-craft p-3.5 text-center">
+                <p className="label-caps text-[9px] text-muted-foreground">{a.k}</p>
+                <p className="mt-1 font-heading text-lg font-bold text-heading tabular">{a.v}</p>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[10px] text-muted-foreground">Aging receivables correlated with delivery sign-offs.</p>
+          <p className="mt-3 text-[10px] text-muted-foreground font-mono">Aging receivables correlated with e-POD delivery sign-offs.</p>
         </Panel>
         <Panel title="Reminder sequence · Gupta Trading Co. Rs 1.4L" testId="reminder-sequence">
           <ol className="space-y-2">

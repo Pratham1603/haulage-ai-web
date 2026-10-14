@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Radar, Inbox, Truck, Container, Warehouse, IndianRupee, Undo2, Phone, Bot,
-  Bell, Search, ChevronDown, LogOut, Sparkles, Compass, Cpu,
+  Bell, Search, ChevronDown, LogOut, Sparkles, Compass, Cpu, BarChart3,
 } from "lucide-react";
 import { LogoMark } from "../site/Logo";
 import { StatusTag } from "../site/ui";
@@ -28,6 +28,7 @@ const NAV = [
   { to: "/app/returns", label: "Returns", icon: Undo2 },
   { to: "/app/calls", label: "Calls", icon: Phone },
   { to: "/app/agents", label: "Agents", icon: Bot },
+  { to: "/app/analytics", label: "Analytics & ML", icon: BarChart3 },
 ];
 
 export const ROLE_HOME = {
@@ -59,12 +60,14 @@ const NavItems = ({ onNavigate, mobile = false }) => {
       onClick={onNavigate}
       data-testid={mobile ? `app-nav-mobile-${slug(label)}` : `app-nav-${slug(label)}`}
       className={({ isActive }) =>
-        `flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
-          isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-heading"
+        `group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+          isActive
+            ? "relative bg-accent text-heading before:absolute before:left-0 before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:content-[''] border border-border/60"
+            : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
         }`
       }
     >
-      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <Icon className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:scale-110" aria-hidden="true" />
       {label}
     </NavLink>
   ));
@@ -73,16 +76,16 @@ const NavItems = ({ onNavigate, mobile = false }) => {
 const AgentFeed = () => {
   const { activity } = useMock();
   return (
-    <aside className="hidden w-72 shrink-0 border-l xl:block" data-testid="agent-activity-feed">
+    <aside className="hidden w-64 shrink-0 border-l xl:block" data-testid="agent-activity-feed">
       <div className="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto p-4">
-        <h2 className="font-heading text-sm font-bold text-heading">Agent activity</h2>
-        <p className="text-[10px] text-muted-foreground">Newest first · demo data</p>
-        <ul className="mt-3 space-y-3">
+        <h2 className="label-caps text-muted-foreground">Agent activity</h2>
+        <p className="mt-0.5 text-[10px] text-muted-foreground/70">Newest first · demo data</p>
+        <ul className="mt-3 space-y-2">
           {activity.map((a) => (
-            <li key={a.id} className="rounded-xl border bg-card p-3">
+            <li key={a.id} className="rounded-md border bg-card p-3 transition-colors hover:bg-accent/40">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{a.agent}</span>
-                <span className="text-[10px] text-muted-foreground">{a.time}</span>
+                <span className="label-caps text-muted-foreground">{a.agent}</span>
+                <span className="font-mono text-[10px] tabular text-muted-foreground">{a.time}</span>
               </div>
               <p className="mt-1 text-xs leading-relaxed text-foreground">{a.action}</p>
               <div className="mt-2"><StatusTag variant={a.tag} /></div>
@@ -103,6 +106,13 @@ export const AppShell = () => {
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [llmSettingsOpen, setLlmSettingsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const onSearch = (e) => {
     e.preventDefault();
@@ -118,7 +128,7 @@ export const AppShell = () => {
 
   return (
     <div className="min-h-screen bg-background" data-testid="app-shell">
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+      <header className={`sticky top-0 z-50 border-b bg-background/95 backdrop-blur transition-shadow duration-200 ${scrolled ? "header-shadow" : ""}`}>
         <div className="flex h-16 items-center gap-3 px-4 md:px-6">
           <NavLink to="/app" className="flex items-center gap-2" data-testid="app-logo">
             <LogoMark />
@@ -150,20 +160,23 @@ export const AppShell = () => {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Ask Copilot (e.g. 'Where is the Delhi truck?')..."
                 aria-label="Ask about your operation"
-                className="h-9 w-full rounded-xl border bg-surface pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground"
+                className="h-9 w-full rounded-xl border border-border/80 bg-surface/70 pl-9 pr-14 text-sm text-foreground placeholder:text-muted-foreground focus:bg-background transition-colors"
               />
+              <kbd className="human-kbd pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px]">
+                ⌘K
+              </kbd>
             </form>
             <button
               type="button"
               onClick={() => setCopilotOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 shrink-0"
+              className="btn-tactile inline-flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary shrink-0"
             >
               <Sparkles className="h-3.5 w-3.5" /> Copilot
             </button>
             <button
               type="button"
               onClick={() => setTourOpen(true)}
-              className="hidden lg:inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-heading transition-all hover:bg-accent hover:border-primary/50 shrink-0"
+              className="btn-tactile-secondary hidden lg:inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface/80 px-3 py-1.5 text-xs font-semibold text-heading shrink-0"
               title="Launch guided interactive product tour"
             >
               <Compass className="h-3.5 w-3.5 text-primary" /> Product Tour
@@ -171,7 +184,7 @@ export const AppShell = () => {
             <button
               type="button"
               onClick={() => setLlmSettingsOpen(true)}
-              className="hidden xl:inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-heading transition-all hover:bg-accent hover:border-primary/50 shrink-0"
+              className="btn-tactile-secondary hidden xl:inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface/80 px-3 py-1.5 text-xs font-semibold text-heading shrink-0"
               title="Configure OpenRouter API Key & LLM Fallback Cascade"
             >
               <Cpu className="h-3.5 w-3.5 text-primary" /> AI Models
@@ -183,7 +196,7 @@ export const AppShell = () => {
                 <button type="button" data-testid="app-notifications" aria-label="Notifications"
                   className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-colors hover:bg-accent">
                   <Bell className="h-4 w-4" />
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-status-human text-[9px] font-bold text-white">6</span>
+                  <span className="badge-pop absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-status-human text-[9px] font-bold text-white">6</span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72">
@@ -230,12 +243,16 @@ export const AppShell = () => {
         </nav>
       </header>
       <div className="flex">
-        <nav className="sticky top-16 hidden h-[calc(100vh-4rem)] w-56 shrink-0 space-y-1 overflow-y-auto border-r p-3 lg:block" aria-label="Sections">
+        <nav
+          className="sticky top-16 hidden h-[calc(100vh-4rem)] w-52 shrink-0 space-y-0.5 overflow-y-auto border-r p-3 lg:block"
+          aria-label="Sections"
+        >
           <NavItems />
         </nav>
-        <main className="min-w-0 flex-1 p-4 md:p-6">
+        <main className="min-w-0 flex-1 p-4 md:p-6 animate-fade-in">
           <Outlet />
         </main>
+
         {pathname === "/app" && <AgentFeed />}
       </div>
 
@@ -243,10 +260,12 @@ export const AppShell = () => {
       <button
         type="button"
         onClick={() => setCopilotOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-primary/40 bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-2xl transition-all hover:scale-105 hover:shadow-primary/30"
+        className="btn-tactile fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground shadow-xl shadow-primary/25"
       >
-        <Sparkles className="h-4 w-4" />
-        Ask Copilot
+        <span className="sonar-ping h-2 w-2 rounded-full bg-emerald-400" />
+        <Sparkles className="h-3.5 w-3.5" />
+        <span>Ask Copilot</span>
+        <kbd className="hidden sm:inline-block rounded bg-primary-foreground/20 px-1.5 py-0.2 font-mono text-[9px] text-primary-foreground">⌘K</kbd>
       </button>
 
       {/* Copilot Drawer */}

@@ -120,14 +120,14 @@ const Contact = () => {
           </div>
           <div>
             {submitted ? (
-              <div className="rounded-xl border bg-card p-6 shadow-sm md:p-8" data-testid="contact-success">
+              <div className="card-craft p-6 md:p-8 border-border/80 shadow-xl bg-card" data-testid="contact-success">
                 <CheckCircle2 className="h-10 w-10 text-status-ai" aria-hidden="true" />
-                <h2 className="mt-4 font-heading text-2xl font-bold">You are booked.</h2>
+                <h2 className="mt-4 font-heading text-2xl font-bold text-heading">You are booked.</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
                   We will reply to <span className="font-medium text-foreground">{submitted.work_email}</span> within one
                   business day to confirm your slot.
                 </p>
-                <dl className="mt-5 space-y-2 rounded-xl border bg-surface p-4 text-sm">
+                <dl className="mt-5 space-y-2 rounded-xl border border-border/70 bg-surface/70 p-4 text-sm">
                   {[
                     ["Name", submitted.name],
                     ["Company", submitted.company],
@@ -143,9 +143,9 @@ const Contact = () => {
                     </div>
                   ))}
                 </dl>
-                <div className="mt-5 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-6 text-center">
+                <div className="mt-5 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/80 p-6 text-center bg-surface/40">
                   <CalendarDays className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
-                  <p className="text-sm font-medium text-heading">Calendar embed placeholder</p>
+                  <p className="text-sm font-semibold text-heading">Calendar embed placeholder</p>
                   <p className="text-xs text-muted-foreground">Pick a time slot here once scheduling is connected.</p>
                 </div>
                 <div className="mt-6 flex flex-wrap gap-6">
@@ -162,9 +162,9 @@ const Contact = () => {
                 onSubmit={onSubmit}
                 noValidate
                 data-testid="contact-form"
-                className="rounded-xl border bg-card p-6 shadow-sm md:p-8"
+                className="card-craft p-6 md:p-8 border-border/80 shadow-xl bg-card"
               >
-                <h2 className="font-heading text-xl font-bold">Book your demo</h2>
+                <h2 className="font-heading text-xl font-bold text-heading">Book your demo</h2>
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   <div>
                     <Label htmlFor="cf-name">Full name *</Label>
@@ -230,8 +230,8 @@ const Contact = () => {
                           aria-pressed={on}
                           data-testid={`cf-challenge-${c.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                           onClick={() => toggleChallenge(c)}
-                          className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                            on ? "border-primary bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-accent"
+                          className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all ${
+                            on ? "border-primary bg-primary text-primary-foreground shadow-2xs" : "bg-surface text-muted-foreground hover:bg-accent"
                           }`}
                         >
                           {c}
@@ -271,7 +271,7 @@ const Contact = () => {
                   type="submit"
                   data-testid="cf-submit"
                   disabled={submitting}
-                  className="mt-5 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                  className="btn-tactile mt-5 w-full rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground shadow-md transition-all disabled:opacity-60"
                 >
                   {submitting ? "Booking..." : "Book my demo"}
                 </button>

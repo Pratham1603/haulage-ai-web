@@ -3,7 +3,7 @@ import { Check, RefreshCw, Radio } from "lucide-react";
 import { toast } from "sonner";
 import { Seo } from "../../components/Seo";
 import { StatusTag } from "../../components/site/ui";
-import { Panel, ActionBtn } from "../../components/app/bits";
+import { Panel, ActionBtn, AnimatedBar } from "../../components/app/bits";
 import { useMock } from "../../mock/store";
 import { apiRequest, LIVE_API_ENABLED } from "../../lib/api";
 
@@ -91,8 +91,12 @@ const Fleet = () => {
             </tr>
           </thead>
           <tbody>
-            {fleetList.map((t) => (
-              <tr key={t.truck} className="border-b last:border-0 hover:bg-surface/50 transition-colors">
+          {fleetList.map((t, i) => (
+              <tr
+                key={t.truck}
+                className="border-b last:border-0 hover:bg-surface/50 transition-colors"
+                style={{ animation: `rise 0.35s cubic-bezier(0.25,1,0.5,1) ${i * 50}ms both` }}
+              >
                 <td className="px-4 py-3 font-medium text-heading">{t.truck}</td>
                 <td className="px-4 py-3 text-muted-foreground">{t.driver}</td>
                 <td className="px-4 py-3 text-muted-foreground">{t.location}</td>
@@ -126,14 +130,14 @@ const Fleet = () => {
       </div>
 
       <Panel title="Utilisation this week (km loaded / km total)" testId="utilisation-chart" className="mt-5">
-        <div className="space-y-3">
-          {fleetList.map((t) => (
+        <div className="space-y-3 stagger-list">
+          {fleetList.map((t, i) => (
             <div key={t.truck} className="flex items-center gap-3">
-              <span className="w-28 shrink-0 text-xs font-medium text-heading">{t.truck}</span>
-              <div className="h-4 flex-1 overflow-hidden rounded-full bg-border">
-                <div className="h-full rounded-full bg-status-ai transition-all" style={{ width: `${t.utilisation}%` }} />
-              </div>
-              <span className="w-10 text-right text-xs text-muted-foreground font-mono">{t.utilisation}%</span>
+              <span className="w-28 shrink-0 text-xs font-medium text-heading tabular">{t.truck}</span>
+              <AnimatedBar pct={t.utilisation} delay={i * 80} />
+              <span className="w-10 shrink-0 text-right tabular text-xs text-muted-foreground">
+                {t.utilisation}%
+              </span>
             </div>
           ))}
         </div>

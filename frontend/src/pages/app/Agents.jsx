@@ -16,10 +16,13 @@ const Dial = ({ value, onChange, testId }) => (
         aria-checked={value === a}
         data-testid={`${testId}-${a.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
         onClick={() => onChange(a)}
-        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-          value === a ? "border-primary bg-primary text-primary-foreground" : "bg-surface text-muted-foreground hover:bg-accent"
+        className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+          value === a
+            ? "btn-tactile border border-primary bg-primary text-primary-foreground shadow-xs font-bold"
+            : "border border-border/80 bg-surface/70 text-muted-foreground hover:bg-surface hover:text-heading"
         }`}
       >
+        {value === a && <span className="inline-block mr-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />}
         {a}
       </button>
     ))}
@@ -28,14 +31,14 @@ const Dial = ({ value, onChange, testId }) => (
 
 const NumField = ({ label, value, onCommit, testId }) => (
   <label className="block">
-    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+    <span className="label-caps text-[9px] text-muted-foreground">{label}</span>
     <input
       type="number"
       defaultValue={value}
       data-testid={testId}
       onBlur={(e) => onCommit(Number(e.target.value))}
       onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
-      className="mt-1 h-9 w-full rounded-xl border bg-background px-3 text-sm text-foreground"
+      className="mt-1 h-9 w-full rounded-xl border border-border/80 bg-card px-3 font-mono text-sm font-semibold text-foreground focus:bg-background transition-colors"
     />
   </label>
 );
@@ -50,16 +53,19 @@ const Agents = () => {
   return (
     <div data-testid="agents-page">
       <Seo title="Agents and Guardrails - Haulage AI" description="Autonomy levels, rate ceilings, spend limits and the audit log for every AI agent." />
-      <h1 className="font-heading text-xl font-bold sm:text-2xl">Agents and Guardrails</h1>
-      <p className="mt-1 text-sm text-muted-foreground">You set the limits. Every action is logged. Changes here update demo state and the audit log.</p>
+      <h1 className="font-heading text-xl font-bold sm:text-2xl text-heading">Agents and Guardrails</h1>
+      <p className="mt-1 text-sm text-muted-foreground">You set the limits. Every action is logged. Changes here update live operational guardrails and the audit log.</p>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
         <Panel title="Autonomy per agent" testId="autonomy-panel">
-          <div className="space-y-4">
+          <div className="space-y-3.5 stagger-list">
             {agents.map((a) => (
-              <div key={a.id} className="rounded-xl border bg-surface p-3.5">
-                <p className="text-sm font-semibold text-heading">{a.name}</p>
-                <div className="mt-2">
+              <div key={a.id} className="card-craft p-3.5 bg-surface/60">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold text-heading">{a.name}</p>
+                  <span className="font-mono text-[10px] text-muted-foreground">Agent ID: {a.id}</span>
+                </div>
+                <div className="mt-2.5">
                   <Dial
                     value={a.autonomy}
                     testId={`dial-${a.id}`}
@@ -73,10 +79,10 @@ const Agents = () => {
 
         <div className="space-y-5">
           <Panel title="Rate benchmark and ceiling per lane" testId="lanes-panel">
-            <div className="space-y-3">
+            <div className="space-y-3 stagger-list">
               {lanes.map((l) => (
-                <div key={l.lane} className="rounded-xl border bg-surface p-3.5">
-                  <p className="text-sm font-semibold text-heading">{l.lane}</p>
+                <div key={l.lane} className="card-craft p-3.5 bg-surface/60">
+                  <p className="text-sm font-bold text-heading">{l.lane}</p>
                   <div className="mt-2 grid grid-cols-2 gap-3">
                     <NumField label="Benchmark (Rs)" value={l.benchmark} testId={`lane-benchmark-${l.lane.replace(/[^a-z0-9]+/gi, "-")}`}
                       onCommit={(v) => updateGuardrail("lane", { lane: l.lane, field: "benchmark" }, v, `${l.lane} benchmark → Rs ${v}`)} />

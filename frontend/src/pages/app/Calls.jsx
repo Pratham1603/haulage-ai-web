@@ -7,17 +7,22 @@ import { useMock, CALL_TRANSCRIPTS } from "../../mock/store";
 import { apiRequest, LIVE_API_ENABLED } from "../../lib/api";
 import { LiveNegotiationArena } from "../../components/app/LiveNegotiationArena";
 
-const Waveform = ({ active }) => (
-  <span className="flex items-end gap-0.5" aria-hidden="true">
-    {[6, 12, 8, 16, 10, 14, 7, 13, 9, 15, 6, 11, 8, 14, 10, 5, 12, 9].map((h, i) => (
-      <span
-        key={i}
-        className={`w-1 rounded-full transition-all ${active ? "animate-pulse bg-status-ai" : "bg-status-ai/70"}`}
-        style={{ height: `${active ? (h * 1.3) % 18 + 4 : h}px` }}
-      />
-    ))}
-  </span>
-);
+const Waveform = ({ active }) => {
+  const eqClasses = ["eq-bar-1", "eq-bar-3", "eq-bar-2", "eq-bar-5", "eq-bar-4", "eq-bar-6"];
+  return (
+    <span className="flex items-end gap-1 h-6 px-1" aria-hidden="true">
+      {[10, 16, 12, 22, 14, 18, 9, 20, 11, 19, 8, 15].map((h, i) => (
+        <span
+          key={i}
+          className={`w-1 rounded-full transition-all ${
+            active ? `bg-status-ai ${eqClasses[i % eqClasses.length]}` : "bg-status-ai/40"
+          }`}
+          style={{ height: active ? undefined : `${h * 0.6}px` }}
+        />
+      ))}
+    </span>
+  );
+};
 
 const Calls = () => {
   const { calls: demoCalls } = useMock();
@@ -169,34 +174,36 @@ const Calls = () => {
                 stopCall();
               }}
               aria-pressed={open === c.id}
-              className={`block w-full rounded-xl border p-4 text-left transition-colors ${
-                open === c.id ? "border-status-ai/50 bg-status-ai/10" : "bg-card shadow-sm hover:bg-accent"
+              className={`card-craft block w-full p-4 text-left transition-all ${
+                open === c.id
+                  ? "border-l-4 border-l-status-ai bg-status-ai/10 shadow-xs"
+                  : "border-l-4 border-l-transparent hover:border-l-border"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2 text-sm font-semibold text-heading">
-                  <Phone className="h-3.5 w-3.5" aria-hidden="true" /> {c.who}
+                  <Phone className="h-3.5 w-3.5 text-status-ai" aria-hidden="true" /> {c.who}
                 </span>
                 <StatusTag variant={c.tag} />
               </div>
-              <p className="mt-1.5 text-xs text-muted-foreground">{c.outcome}</p>
-              <p className="mt-1 text-[10px] text-muted-foreground">{c.lang} · {c.duration} · {c.time}</p>
+              <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{c.outcome}</p>
+              <p className="mt-1 font-mono text-[10px] text-muted-foreground/80">{c.lang} · {c.duration} · {c.time}</p>
             </button>
           ))}
         </div>
 
         <Panel title={transcript ? transcript.title : "Transcript"} testId="call-detail">
           {/* Active Call Controls */}
-          <div className="mb-4 rounded-xl border bg-surface p-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5">
+          <div className="mb-4 rounded-xl border border-border/80 bg-surface/70 p-3 shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2.5">
               <div className="flex items-center gap-2">
                 {callState === "connected" && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> LIVE CALL {formatSecs(callDuration)}
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="sonar-ping h-1.5 w-1.5 rounded-full bg-emerald-500" /> LIVE CALL {formatSecs(callDuration)}
                   </span>
                 )}
                 {callState === "dialing" && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 animate-pulse">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold text-amber-600 animate-pulse">
                     <Radio className="h-3 w-3" /> Dialing Carrier...
                   </span>
                 )}
@@ -206,23 +213,26 @@ const Calls = () => {
                   </span>
                 )}
                 {callState === "idle" && (
-                  <span className="text-[11px] font-medium text-muted-foreground">Telephony Simulator Ready</span>
+                  <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                    Telephony Simulator Ready
+                  </span>
                 )}
               </div>
 
               {/* Language toggle */}
-              <div className="flex rounded-lg border bg-card p-0.5 text-[11px]">
+              <div className="flex rounded-lg border border-border/70 bg-card p-0.5 text-[11px]">
                 <button
                   type="button"
                   onClick={() => setSpeechLang("native")}
-                  className={`rounded-md px-2 py-0.5 font-medium transition-all ${speechLang === "native" ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground"}`}
+                  className={`rounded-md px-2 py-0.5 font-medium transition-all ${speechLang === "native" ? "bg-primary text-primary-foreground font-semibold shadow-xs" : "text-muted-foreground"}`}
                 >
                   Native ({currentCall?.lang || "Indian"})
                 </button>
                 <button
                   type="button"
                   onClick={() => setSpeechLang("en")}
-                  className={`rounded-md px-2 py-0.5 font-medium transition-all ${speechLang === "en" ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground"}`}
+                  className={`rounded-md px-2 py-0.5 font-medium transition-all ${speechLang === "en" ? "bg-primary text-primary-foreground font-semibold shadow-xs" : "text-muted-foreground"}`}
                 >
                   English Audio
                 </button>
@@ -242,7 +252,7 @@ const Calls = () => {
                   <button
                     type="button"
                     onClick={stopCall}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-500/20"
+                    className="btn-tactile inline-flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-500/20"
                   >
                     <PhoneOff className="h-3.5 w-3.5" /> End Call
                   </button>
@@ -250,7 +260,7 @@ const Calls = () => {
                   <button
                     type="button"
                     onClick={startCallSimulation}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-status-ai px-3.5 py-1.5 text-xs font-bold text-white shadow-md hover:opacity-90"
+                    className="btn-tactile inline-flex items-center gap-1.5 rounded-lg bg-status-ai px-3.5 py-1.5 text-xs font-bold text-white shadow-sm"
                   >
                     <PhoneCall className="h-3.5 w-3.5" /> 🔊 Simulate Live Call (TTS)
                   </button>

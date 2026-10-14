@@ -1,0 +1,41 @@
+{
+  "version": "analytics-v1",
+  "champion_model": "logistic_regression",
+  "feature_columns": [
+    "route_key",
+    "vehicle_type",
+    "weight_kg",
+    "pallets",
+    "pickup_hour",
+    "day_of_week",
+    "carrier_historical_on_time_rate",
+    "trip_distance_km"
+  ],
+  "benchmarks": {
+    "models": {
+      "logistic_regression": {
+        "model_name": "Logistic Regression (Baseline)",
+        "precision": 0.4118,
+        "recall": 0.7,
+        "f1": 0.5185,
+        "roc_auc": 0.7409
+      },
+      "random_forest": {
+        "model_name": "Random Forest Classifier",
+        "precision": 0.4167,
+        "recall": 0.5,
+        "f1": 0.4545,
+        "roc_auc": 0.6991
+      }
+    },
+    "champion_model": "logistic_regression",
+    "duration_regression": {
+      "mae_hours": 1.96,
+      "rmse_hours": 2.37
+    },
+    "dataset_size": 300,
+    "train_size": 225,
+    "test_size": 75
+  },
+  "updated_at": "2026-10-14T18:14:12.334212+00:00"
+}

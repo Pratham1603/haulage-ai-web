@@ -1,6 +1,6 @@
 import { Seo } from "../components/Seo";
 import { SiteLayout } from "../components/SiteLayout";
-import { Hero, StatusTag, PlaceholderChip } from "../components/site/ui";
+import { Hero, PlaceholderChip } from "../components/site/ui";
 import {
   LogoBar,
   ProblemCards,
@@ -15,7 +15,10 @@ import {
   FaqAccordion,
   FinalCtaBanner,
 } from "../components/site/blocks";
-import { ControlTowerMockup, VoiceCallMockup } from "../components/site/mockups";
+import { VoiceCallMockup } from "../components/site/mockups";
+import { HeroInteractiveShowcase } from "../components/site/HeroInteractiveShowcase";
+import { CorridorTickerTape } from "../components/site/CorridorTickerTape";
+import { InteractiveSimulator } from "../components/site/InteractiveSimulator";
 import { Section, Container, SectionHeading } from "../components/site/ui";
 import { PROBLEMS, STEPS, METRICS, TESTIMONIALS, HOME_FAQS } from "../content/site";
 
@@ -30,14 +33,9 @@ const Home = () => (
       title="Your logistics back office, run by AI agents."
       sub="Haulage AI reads orders, answers calls in Hindi and Gujarati, matches trucks, checks warehouses, audits invoices, and handles returns. Your team handles the exceptions."
       secondaryTo="/how-it-works"
-      visual={
-        <div className="relative">
-          <ControlTowerMockup />
-          <StatusTag variant="ai" className="absolute -left-2 -top-3 shadow-sm sm:-left-4" />
-          <StatusTag variant="approval" className="absolute -right-2 top-1/3 shadow-sm sm:-right-4" />
-        </div>
-      }
+      visual={<HeroInteractiveShowcase />}
     />
+    <CorridorTickerTape />
     <LogoBar />
     <ProblemCards
       title="Freight still runs on inboxes, phone calls, and spreadsheets."
@@ -51,6 +49,7 @@ const Home = () => (
       steps={STEPS}
       link={{ to: "/how-it-works", label: "See how it works" }}
     />
+    <InteractiveSimulator />
     <FeatureBlock
       testId="voice-highlight"
       title="Calls your drivers actually pick up."
@@ -85,3 +84,4 @@ const Home = () => (
 );
 
 export default Home;
+

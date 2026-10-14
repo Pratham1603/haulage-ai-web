@@ -3,23 +3,23 @@ import { StatusTag } from "./ui";
 import { MODULES } from "../../content/site";
 
 export const MockupCard = ({ title, right, children, className = "", testId }) => (
-  <div data-testid={testId} className={`overflow-hidden rounded-xl border bg-card shadow-sm ${className}`}>
-    <div className="flex items-center gap-1.5 border-b px-4 py-2.5">
-      <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" aria-hidden="true" />
-      <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" aria-hidden="true" />
-      <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" aria-hidden="true" />
-      <span className="ml-2 truncate text-xs font-medium text-muted-foreground">{title}</span>
+  <div data-testid={testId} className={`card-craft overflow-hidden shadow-md ${className}`}>
+    <div className="flex items-center gap-1.5 border-b bg-surface/50 px-4 py-3 backdrop-blur-xs">
+      <span className="h-2.5 w-2.5 rounded-full bg-red-400/80 transition-opacity hover:opacity-100" aria-hidden="true" />
+      <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80 transition-opacity hover:opacity-100" aria-hidden="true" />
+      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80 transition-opacity hover:opacity-100" aria-hidden="true" />
+      <span className="ml-2 truncate font-mono text-[11px] font-medium text-muted-foreground">{title}</span>
       {right && <span className="ml-auto shrink-0">{right}</span>}
     </div>
-    <div className="p-4">{children}</div>
+    <div className="p-4 sm:p-5">{children}</div>
   </div>
 );
 
 const KPIS = [
-  { label: "On-time", value: "96%" },
-  { label: "Active trucks", value: "42" },
-  { label: "Exceptions", value: "3" },
-  { label: "Approvals", value: "2" },
+  { label: "On-time", value: "96%", change: "+2.1%" },
+  { label: "Active trucks", value: "42", change: "Full fleet" },
+  { label: "Exceptions", value: "3", change: "1 critical" },
+  { label: "Approvals", value: "2", change: "Pending" },
 ];
 
 const EXCEPTIONS = [
@@ -35,25 +35,27 @@ const FEED = [
 ];
 
 export const ControlTowerMockup = ({ testId = "control-tower-mockup" }) => (
-  <MockupCard title="Control Tower · Live" right={<StatusTag variant="ai" />} testId={testId}>
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+  <MockupCard title="control-tower.app.haulage.ai · Live" right={<StatusTag variant="ai" />} testId={testId}>
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 stagger-list">
       {KPIS.map((k) => (
-        <div key={k.label} className="rounded-lg border bg-surface p-2.5">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{k.label}</p>
-          <p className="font-heading text-lg font-bold text-heading">{k.value}</p>
+        <div key={k.label} className="rounded-lg border border-border/80 bg-surface/80 p-2.5 shadow-xs transition-transform hover:-translate-y-0.5">
+          <p className="label-caps text-[9px] text-muted-foreground">{k.label}</p>
+          <p className="mt-0.5 font-heading text-lg font-bold text-heading tabular">{k.value}</p>
+          <span className="text-[9px] text-muted-foreground font-mono">{k.change}</span>
         </div>
       ))}
     </div>
-    <div className="mt-3 grid gap-3 md:grid-cols-2">
-      <div className="rounded-lg border p-3">
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          Exceptions and approvals
-        </p>
-        <ul className="space-y-2">
+    <div className="mt-3.5 grid gap-3 md:grid-cols-2">
+      <div className="rounded-lg border border-border/80 p-3 shadow-xs bg-card/60">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="label-caps text-muted-foreground">Exceptions & Approvals</p>
+          <span className="sonar-ping h-1.5 w-1.5 rounded-full bg-status-approval" />
+        </div>
+        <ul className="space-y-2 stagger-list">
           {EXCEPTIONS.map((e) => (
-            <li key={e.id} className="rounded-lg bg-surface p-2">
+            <li key={e.id} className="rounded-lg border border-border/60 bg-surface/70 p-2 shadow-xs transition-colors hover:bg-surface">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-heading">{e.id}</span>
+                <span className="font-mono text-xs font-semibold text-heading">{e.id}</span>
                 <StatusTag variant={e.tag} />
               </div>
               <p className="mt-1 text-xs text-muted-foreground">{e.text}</p>
@@ -62,62 +64,82 @@ export const ControlTowerMockup = ({ testId = "control-tower-mockup" }) => (
         </ul>
       </div>
       <div className="flex flex-col gap-3">
-        <div className="rounded-lg border p-3">
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Live map</p>
+        <div className="rounded-lg border border-border/80 p-3 shadow-xs bg-card/60">
+          <div className="mb-1.5 flex items-center justify-between">
+            <p className="label-caps text-muted-foreground">NH-48 Live Telematics</p>
+            <span className="font-mono text-[9px] text-status-ai font-semibold">1,420 KM</span>
+          </div>
           <svg viewBox="0 0 220 90" className="w-full text-muted-foreground" role="img" aria-label="Route map from Mumbai to Delhi">
-            <path d="M25 70 C 80 75, 120 55, 195 22" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 4" />
-            <circle cx="25" cy="70" r="4" className="fill-heading" stroke="none" />
-            <circle cx="195" cy="22" r="4" className="fill-heading" stroke="none" />
-            <circle cx="118" cy="52" r="5" className="fill-status-ai" stroke="none" />
-            <text x="14" y="86" fontSize="9" fill="currentColor">Mumbai</text>
-            <text x="180" y="14" fontSize="9" fill="currentColor">Delhi</text>
-            <text x="104" y="44" fontSize="8" fill="currentColor">LR-8839</text>
+            <rect width="220" height="90" rx="6" className="fill-surface/60" />
+            <path d="M25 70 C 80 75, 120 55, 195 22" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" className="text-muted-foreground/40" />
+            <circle cx="25" cy="70" r="3.5" className="fill-heading" />
+            <circle cx="195" cy="22" r="3.5" className="fill-heading" />
+            {/* Live moving pin with sonar wave */}
+            <circle cx="118" cy="52" r="8" fill="none" className="stroke-status-ai" strokeWidth="1" opacity="0.4">
+              <animate attributeName="r" values="4;10;4" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="118" cy="52" r="4" className="fill-status-ai" />
+            <text x="14" y="84" fontSize="8" fontWeight="600" fill="currentColor">Bhiwandi</text>
+            <text x="175" y="14" fontSize="8" fontWeight="600" fill="currentColor">Narela</text>
+            <text x="102" y="44" fontSize="7.5" fontWeight="600" className="fill-status-ai font-mono">LR-8839 (64 km/h)</text>
           </svg>
         </div>
-        <div className="rounded-lg border p-3">
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Agent activity</p>
+        <div className="rounded-lg border border-border/80 p-3 shadow-xs bg-card/60">
+          <p className="mb-1.5 label-caps text-muted-foreground">Agent activity</p>
           <ul className="space-y-1.5">
-            {FEED.map((f) => (
-              <li key={f} className="flex gap-1.5 text-xs text-muted-foreground">
-                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-status-ai" aria-hidden="true" />
-                {f}
+            {FEED.map((f, i) => (
+              <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-status-ai" aria-hidden="true" />
+                <span className="truncate">{f}</span>
               </li>
             ))}
           </ul>
         </div>
       </div>
     </div>
-    <p className="mt-2 text-[10px] text-muted-foreground">Placeholder data.</p>
   </MockupCard>
 );
 
 export const VoiceCallMockup = ({ testId = "voice-call-mockup" }) => (
-  <MockupCard title="Voice AI · Live call · Gujarati" right={<StatusTag variant="ai" />} testId={testId}>
-    <div className="flex items-center gap-3 rounded-lg border bg-surface p-3">
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-        <Phone className="h-4 w-4" aria-hidden="true" />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-heading">+91 98XXX XX210 · Driver, LR-8844</p>
-        <p className="text-xs text-muted-foreground">00:42 · Answered by Voice AI</p>
+  <MockupCard title="voice-agent.call · Gujarati/Hindi · Live" right={<StatusTag variant="ai" />} testId={testId}>
+    <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-surface/80 p-3 shadow-xs">
+      <div className="sonar-ping">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs">
+          <Phone className="h-4 w-4" aria-hidden="true" />
+        </span>
       </div>
-      <span className="ml-auto flex items-end gap-0.5" aria-hidden="true">
-        {[8, 14, 6, 16, 10, 14, 7].map((h, i) => (
-          <span key={i} className="w-1 rounded-full bg-status-ai/70" style={{ height: `${h}px` }} />
-        ))}
-      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-heading">+91 98XXX XX210 · Driver Ramesh</p>
+        <p className="font-mono text-xs text-muted-foreground flex items-center gap-1.5">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          00:42 · Voice AI Auto-Negotiator
+        </p>
+      </div>
+      {/* Dynamic Animated Equalizer Bars */}
+      <div className="ml-auto flex items-end gap-1 h-6 px-1" aria-hidden="true">
+        <span className="w-1 rounded-full bg-status-ai eq-bar-1" />
+        <span className="w-1 rounded-full bg-status-ai eq-bar-2" />
+        <span className="w-1 rounded-full bg-status-ai eq-bar-3" />
+        <span className="w-1 rounded-full bg-status-ai eq-bar-4" />
+        <span className="w-1 rounded-full bg-status-ai eq-bar-5" />
+        <span className="w-1 rounded-full bg-status-ai eq-bar-6" />
+      </div>
     </div>
     <div className="mt-3 space-y-2.5">
-      <div className="max-w-[85%] rounded-lg border bg-surface p-3">
-        <p className="text-sm text-foreground">"सर, ट्रक नरेला कब पहुंचेगा? लोडिंग की टीम इंतज़ार कर रही है।"</p>
-        <p className="mt-1 text-xs text-muted-foreground">Sir, when will the truck reach Narela? The loading team is waiting.</p>
+      <div className="max-w-[85%] rounded-xl border border-border/80 bg-surface/90 p-3 shadow-xs">
+        <p className="text-sm font-medium text-foreground">"સર, ટ્રક નરેલા ક્યારે પહોંચશે? લોડિંગ ટીમ રાહ જોઈ રહી છે."</p>
+        <p className="mt-1 text-xs text-muted-foreground italic">Sir, when will the truck reach Narela? The loading team is waiting.</p>
       </div>
-      <div className="ml-auto max-w-[85%] rounded-lg border border-status-ai/30 bg-status-ai/10 p-3">
-        <p className="text-sm text-foreground">"ट्रक शाम 6 बजे तक पहुंच जाएगा। मैंने ड्राइवर से पुष्टि कर ली है।"</p>
-        <p className="mt-1 text-xs text-muted-foreground">The truck will arrive by 6 PM. I have confirmed with the driver.</p>
+      <div className="ml-auto max-w-[85%] rounded-xl border border-status-ai/40 bg-status-ai/10 p-3 shadow-xs">
+        <p className="text-sm font-medium text-foreground">"ટ્રક સાંજે 6 વાગ્યા સુધીમાં પહોંચી જશે. મેં ડ્રાઈવર સાથે વાત કરી લીધી છે."</p>
+        <p className="mt-1 text-xs text-muted-foreground italic">The truck will arrive by 6 PM. I have confirmed with the driver.</p>
       </div>
     </div>
-    <p className="mt-2 text-[10px] text-muted-foreground">Illustrative transcript.</p>
+    <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/40">
+      <span className="font-mono">Speech Latency: 340ms · Whisper + DeepSeek R1</span>
+      <span className="rounded bg-surface px-1.5 py-0.5 border">Real-time Audio</span>
+    </div>
   </MockupCard>
 );
 

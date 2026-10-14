@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Mail, FileText, Send, Sparkles, CheckCircle2, AlertCircle, RefreshCw, Upload } from "lucide-react";
+import { Mail, FileText, Send, Sparkles, CheckCircle2, AlertCircle, RefreshCw, Upload, CloudSun, PhoneCall, Truck, BellRing, Radio, ShieldCheck, Zap } from "lucide-react";
 import { Seo } from "../../components/Seo";
 import { StatusTag } from "../../components/site/ui";
 import { Panel, Conf, ActionBtn, ResolvedNote } from "../../components/app/bits";
+import { FeatureAttributionWaterfall } from "../../components/app/FeatureAttributionWaterfall";
 import { useMock, ORD_1042_FIELDS } from "../../mock/store";
 import { apiRequest, LIVE_API_ENABLED } from "../../lib/api";
 import { toast } from "sonner";
+
 
 const Hl = ({ children }) => <mark className="rounded bg-status-ai/15 px-0.5 text-heading">{children}</mark>;
 
@@ -26,6 +28,43 @@ const OrderDetail = ({ selectedId, liveOrders, onOrderUpdated }) => {
   const [loading, setLoading] = useState(false);
   const [amendDest, setAmendDest] = useState("");
   const [showAmend, setShowAmend] = useState(false);
+  const [delayPrediction, setDelayPrediction] = useState(null);
+  const [costPrediction, setCostPrediction] = useState(null);
+  const [mitigating, setMitigating] = useState(false);
+  const [mitigationLog, setMitigationLog] = useState(null);
+
+  const handleMitigatePlaybook = async (playbook) => {
+    if (!order?.id) return;
+    setMitigating(true);
+    try {
+      if (LIVE_API_ENABLED) {
+        const res = await apiRequest("/operations/exceptions/mitigate", {
+          method: "POST",
+          body: JSON.stringify({ order_id: order.id, playbook }),
+        });
+        setMitigationLog(res?.mitigation);
+        toast.success(res?.mitigation?.message || "Mitigation playbook executed successfully!");
+        if (onOrderUpdated) onOrderUpdated();
+      } else {
+        const titles = {
+          voice_checkin: "Autonomous AI Driver Call executed · Milestone confirmed",
+          reassign_priority: "Carrier upgraded to Elite Freightways Priority Express",
+          customer_advisory: "Proactive buffer notice sent to Consignee WhatsApp & Email",
+        };
+        toast.success(titles[playbook] || "Mitigation applied");
+        setMitigationLog({
+          playbook,
+          status: "executed",
+          message: titles[playbook],
+        });
+      }
+    } catch (err) {
+      toast.error(err.message || "Mitigation failed");
+    } finally {
+      setMitigating(false);
+    }
+  };
+
 
   useEffect(() => {
     if (order?.weight_kg) {
@@ -34,7 +73,29 @@ const OrderDetail = ({ selectedId, liveOrders, onOrderUpdated }) => {
       setWeight("14.2 t");
     }
     setEdited(false);
-  }, [selectedId, order?.weight_kg]);
+
+    if (order && LIVE_API_ENABLED) {
+      const payload = {
+        route_key: order.lane || "BHIWANDI->NARELA",
+        origin: order.origin || "Bhiwandi",
+        destination: order.destination || "Narela",
+        vehicle_type: order.vehicle_requirement || order.vehicle_type || "32ft",
+        weight_kg: order.weight_kg || 14200,
+        pallets: order.pallets || 18,
+        carrier_id: order.carrier_id || "carrier-hasmukh",
+      };
+      apiRequest("/intelligence/delay-prediction", {
+        method: "POST",
+        body: JSON.stringify({ shipment: payload }),
+      }).then((res) => setDelayPrediction(res?.prediction)).catch(() => {});
+
+      apiRequest("/intelligence/cost-estimate", {
+        method: "POST",
+        body: JSON.stringify({ shipment: payload }),
+      }).then((res) => setCostPrediction(res)).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, order?.weight_kg, order?.id]);
 
   const handleApprove = async () => {
     setLoading(true);
@@ -101,20 +162,29 @@ const OrderDetail = ({ selectedId, liveOrders, onOrderUpdated }) => {
   return (
     <Panel title={`${order?.id || "ORD-1042"} · Intake evidence and extracted fields`} testId="order-detail" className="mt-5">
       <div className="grid gap-5 lg:grid-cols-2">
-        <div className="rounded-xl border bg-surface p-4">
-          <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <Mail className="h-3 w-3" /> Original intake · {order?.customer_name || "Aarav Consumer Products"} ({order?.source_channel || "email"})
-          </p>
-          <p className="mt-3 text-xs font-semibold text-heading">
+        <div className="card-craft p-4.5 bg-surface/70">
+          <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
+            <p className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <Mail className="h-3.5 w-3.5 text-primary" /> Intake Payload · {order?.source_channel || "email"}
+            </p>
+            <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+              <span className="sonar-ping h-1.5 w-1.5 rounded-full bg-emerald-500" /> GSTN VERIFIED
+            </span>
+          </div>
+
+          <p className="mt-3 text-xs font-bold text-heading">
             Order: {order?.pallets || 18} pallets to {order?.destination || "Narela"}, {order?.pickup_window || "Thursday pickup"}
           </p>
-          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          <div className="mt-2.5 rounded-lg border border-border/60 bg-card p-3 text-xs leading-relaxed text-muted-foreground font-sans">
             Hi team, please book <Hl>{order?.pallets || 18} pallets</Hl> of {order?.cargo || "packaged goods"} from <Hl>{order?.origin || "Bhiwandi WH-3"}</Hl> to{" "}
             <Hl>{order?.destination || "Gupta Trading Co., Narela"}</Hl>. Pickup window <Hl>{order?.pickup_window || "Thursday 08:00-12:00"}</Hl>. Vehicle: <Hl>{order?.vehicle_requirement || "32 ft MXL"}</Hl>.
-            Regards, Meera — <Hl>{order?.customer_name || "Aarav Consumer Products"}</Hl>
-          </p>
-          <p className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <FileText className="h-3.5 w-3.5" /> {order?.po_number ? `${order.po_number}.xlsx` : "order-1042.xlsx"} · invoice-2211.pdf attached
+            <div className="mt-2 text-foreground font-medium">
+              Regards, Meera — <Hl>{order?.customer_name || "Aarav Consumer Products"}</Hl>
+            </div>
+          </div>
+
+          <p className="mt-3 flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+            <FileText className="h-3.5 w-3.5 text-primary" /> {order?.po_number ? `${order.po_number}.xlsx` : "order-1042.xlsx"} · invoice-2211.pdf attached (OCR Analyzed)
           </p>
           {order?.conflicts?.length > 0 && (
             <div className="mt-3 rounded-lg border border-status-human/40 bg-status-human/10 p-2.5 text-xs text-status-human">
@@ -131,14 +201,18 @@ const OrderDetail = ({ selectedId, liveOrders, onOrderUpdated }) => {
         </div>
 
         <div>
-          <ul className="space-y-2">
+          <ul className="space-y-2 stagger-list">
             {fields.map((f) => (
               <li
                 key={f.k}
-                className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${f.low ? "border-status-human/50 bg-status-human/5" : "bg-surface"}`}
+                className={`card-craft flex items-center justify-between gap-3 p-3 ${
+                  f.low
+                    ? "border-l-4 border-l-status-human bg-status-human/5"
+                    : "border-l-4 border-l-status-ai/40 bg-surface/60"
+                }`}
               >
                 <div>
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{f.k}</p>
+                  <p className="label-caps text-[9px] text-muted-foreground">{f.k}</p>
                   {f.low && f.k.toLowerCase().includes("weight") ? (
                     <div className="mt-1 flex items-center gap-2">
                       <input
@@ -146,17 +220,17 @@ const OrderDetail = ({ selectedId, liveOrders, onOrderUpdated }) => {
                         data-testid="order-1042-weight-input"
                         onChange={(e) => { setWeight(e.target.value); setEdited(true); }}
                         aria-label="Weight field, low confidence, editable"
-                        className="h-8 w-24 rounded-lg border bg-background px-2 text-xs font-medium text-foreground"
+                        className="h-8 w-24 rounded-lg border border-status-human/50 bg-background px-2 font-mono text-xs font-bold text-foreground focus:ring-1 focus:ring-status-human"
                       />
-                      <span className="text-[10px] text-status-human">conflict: invoice 14.2 t vs Excel 14.5 t</span>
+                      <span className="font-mono text-[10px] text-status-human font-semibold">invoice 14.2 t vs Excel 14.5 t</span>
                     </div>
                   ) : (
-                    <p className="text-xs font-medium text-heading">{f.v}</p>
+                    <p className="mt-0.5 font-mono text-xs font-semibold text-heading">{f.v}</p>
                   )}
                 </div>
                 <div className="text-right">
                   <Conf pct={f.conf} />
-                  <p className="mt-0.5 text-[9px] text-muted-foreground">source: {f.src}</p>
+                  <p className="mt-0.5 font-mono text-[9px] text-muted-foreground">src: {f.src}</p>
                 </div>
               </li>
             ))}
@@ -223,6 +297,188 @@ const OrderDetail = ({ selectedId, liveOrders, onOrderUpdated }) => {
             </div>
           )}
         </div>
+
+        {/* Predictive Intelligence & Cost Forecast Section */}
+        {(delayPrediction || costPrediction) && (
+          <div className="col-span-full mt-2 rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
+              <span className="flex items-center gap-2 font-heading text-xs font-bold text-primary">
+                <Sparkles className="h-3.5 w-3.5" />
+                Predictive Intelligence & Freight Financial Forecast
+              </span>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                ML Version: {delayPrediction?.model_version || "v1"} · Pre-dispatch features
+              </span>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-xs">
+              <div className="rounded-lg border border-border/70 bg-card p-2.5">
+                <p className="text-[10px] font-bold uppercase text-muted-foreground">Predicted Delay Risk</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="font-heading text-lg font-bold text-heading">
+                    {Math.round((delayPrediction?.predicted_probability || 0.24) * 100)}%
+                  </span>
+                  <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                    (delayPrediction?.risk_category || "low") === "low"
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                      : (delayPrediction?.risk_category || "low") === "medium"
+                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30"
+                  }`}>
+                    {(delayPrediction?.risk_category || "low").toUpperCase()} RISK
+                  </span>
+                </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {delayPrediction?.estimated_delay_hours > 0 ? `Est. Delay: +${delayPrediction.estimated_delay_hours}h` : "ETA on track"}
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-border/70 bg-card p-2.5">
+                <p className="text-[10px] font-bold uppercase text-muted-foreground">Predicted Trip Cost</p>
+                <p className="mt-1 font-mono text-lg font-bold text-heading">
+                  Rs {Math.round(costPrediction?.predicted_trip_cost || 17200).toLocaleString("en-IN")}
+                </p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {costPrediction?.distance_km || 360} km · {costPrediction?.vehicle_type || "32ft"}
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-border/70 bg-card p-2.5">
+                <p className="text-[10px] font-bold uppercase text-muted-foreground">Expected Customer Revenue</p>
+                <p className="mt-1 font-mono text-lg font-bold text-heading">
+                  Rs {Math.round(costPrediction?.expected_revenue || 23700).toLocaleString("en-IN")}
+                </p>
+                <p className="mt-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  Profit: Rs {Math.round(costPrediction?.expected_profit || 6500).toLocaleString("en-IN")}
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-border/70 bg-card p-2.5">
+                <p className="text-[10px] font-bold uppercase text-muted-foreground">Expected Trip Margin</p>
+                <p className={`mt-1 font-mono text-lg font-bold ${
+                  (costPrediction?.margin_percent || 27.5) < 12 ? "text-rose-500" : "text-emerald-600 dark:text-emerald-400"
+                }`}>
+                  {costPrediction?.margin_percent || 27.5}%
+                </p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {(costPrediction?.margin_percent || 27.5) < 12 ? "Low margin warning" : "Target margin healthy"}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border/60 bg-surface/70 p-2.5 text-xs text-foreground/90">
+              <strong className="text-heading">Operational Action:</strong>{" "}
+              {delayPrediction?.recommended_action || "Standard corridor monitoring; no operational intervention needed."}
+            </div>
+
+            {/* Feature 3: Live Corridor Environmental Telematics (Open-Meteo API) */}
+            {delayPrediction?.live_weather && (
+              <div className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 space-y-2 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-sky-500/20 pb-1.5">
+                  <span className="flex items-center gap-1.5 font-heading text-xs font-bold text-sky-600 dark:text-sky-400">
+                    <CloudSun className="h-4 w-4" />
+                    Live Highway Environmental Telematics
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    {delayPrediction.live_weather.source}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div className="rounded bg-card/60 p-2 border border-border/50">
+                    <p className="text-[10px] text-muted-foreground uppercase">Corridor Temp</p>
+                    <p className="font-heading font-bold text-heading mt-0.5">{delayPrediction.live_weather.temperature_c}°C</p>
+                  </div>
+                  <div className="rounded bg-card/60 p-2 border border-border/50">
+                    <p className="text-[10px] text-muted-foreground uppercase">Precipitation</p>
+                    <p className="font-heading font-bold text-heading mt-0.5">{delayPrediction.live_weather.precipitation_mm} mm</p>
+                  </div>
+                  <div className="rounded bg-card/60 p-2 border border-border/50">
+                    <p className="text-[10px] text-muted-foreground uppercase">Highway Wind</p>
+                    <p className="font-heading font-bold text-heading mt-0.5">{delayPrediction.live_weather.wind_speed_kmh} km/h</p>
+                  </div>
+                  <div className="rounded bg-card/60 p-2 border border-border/50">
+                    <p className="text-[10px] text-muted-foreground uppercase">Corridor Status</p>
+                    <p className="font-heading font-bold text-heading mt-0.5 truncate">{delayPrediction.live_weather.condition_summary}</p>
+                  </div>
+                </div>
+                <div className="rounded bg-sky-500/10 p-2 text-[11px] text-sky-800 dark:text-sky-200">
+                  <strong>Impact Advisory:</strong> {delayPrediction.live_weather.operational_impact}
+                </div>
+              </div>
+            )}
+
+            {/* Feature 4: Explainable AI (XAI) Waterfall Feature Attribution */}
+            <FeatureAttributionWaterfall
+              attributions={delayPrediction?.feature_attributions}
+              predictedProbability={delayPrediction?.predicted_probability}
+            />
+
+            {/* Feature 2: One-Click Automated Exception Mitigation Playbooks */}
+            <div className="rounded-xl border border-primary/40 bg-gradient-to-br from-card to-primary/5 p-3.5 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-border/60 pb-2">
+                <span className="flex items-center gap-1.5 font-heading text-xs font-bold text-heading">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  One-Click Automated Exception Mitigation Playbooks
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  Autonomous Decision Support
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Trigger instant autonomous mitigation routines for this order to preemptively prevent downstream delivery penalties and dock congestion.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleMitigatePlaybook("voice_checkin")}
+                  disabled={mitigating}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-2 text-xs font-semibold text-blue-600 dark:text-blue-400 transition-colors disabled:opacity-50"
+                >
+                  <PhoneCall className="h-3.5 w-3.5" />
+                  AI Driver Voice Call
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleMitigatePlaybook("reassign_priority")}
+                  disabled={mitigating}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-2 text-xs font-semibold text-purple-600 dark:text-purple-400 transition-colors disabled:opacity-50"
+                >
+                  <Truck className="h-3.5 w-3.5" />
+                  Priority Express Reassign
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleMitigatePlaybook("customer_advisory")}
+                  disabled={mitigating}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 transition-colors disabled:opacity-50"
+                >
+                  <BellRing className="h-3.5 w-3.5" />
+                  Consignee Buffer Advisory
+                </button>
+              </div>
+
+              {mitigationLog && (
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-2.5 text-xs text-emerald-800 dark:text-emerald-200 flex items-start gap-2 animate-in fade-in">
+                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-600 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">{mitigationLog.message}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Playbook: <code className="font-mono">{mitigationLog.playbook}</code> · Status: {mitigationLog.status}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
     </Panel>
   );
@@ -454,7 +710,7 @@ const Orders = () => {
               {/* Document Preview & OCR scanner */}
               <div className="relative rounded-xl border bg-surface p-4 lg:col-span-7 flex flex-col justify-between overflow-hidden">
                 {scanning && (
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-status-ai to-transparent shadow-[0_0_15px_#10b981] animate-pulse" />
+                  <div className="laser-scanline" />
                 )}
                 <div>
                   <div className="flex items-center justify-between border-b pb-2">

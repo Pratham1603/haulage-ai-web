@@ -31,18 +31,23 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background" data-testid="login-page">
+    <div className="relative flex min-h-screen flex-col bg-background overflow-hidden" data-testid="login-page">
       <Seo
         title="Log in - Haulage AI"
         description="Log in to the Haulage AI dashboard demo. Exceptions first, everything else handled."
       />
-      <header className="mx-auto flex w-full max-w-[1200px] items-center px-5 py-5 md:px-8">
+      {/* Ambient Glow */}
+      <div className="ambient-glow -top-32 -left-20 h-96 w-96 bg-primary/20" aria-hidden="true" />
+      <div className="ambient-glow bottom-0 -right-20 h-96 w-96 bg-status-ai/15" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 bg-grid-dots opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_75%)]" aria-hidden="true" />
+
+      <header className="relative z-10 mx-auto flex w-full max-w-[1200px] items-center px-5 py-5 md:px-8">
         <Logo testId="login-logo" />
       </header>
-      <main className="mx-auto grid w-full max-w-[1200px] flex-1 items-center gap-10 px-5 pb-16 md:px-8 lg:grid-cols-2">
+      <main className="relative z-10 mx-auto grid w-full max-w-[1200px] flex-1 items-center gap-10 px-5 pb-16 md:px-8 lg:grid-cols-2">
         <div className="mx-auto w-full max-w-md">
-          <form onSubmit={onSubmit} noValidate data-testid="login-form" className="rounded-xl border bg-card p-6 shadow-sm md:p-8">
-            <h1 className="font-heading text-2xl font-bold">Log in to Haulage AI</h1>
+          <form onSubmit={onSubmit} noValidate data-testid="login-form" className="card-craft p-6 md:p-8">
+            <h1 className="font-heading text-2xl font-bold text-heading">Log in to Haulage AI</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Demo build: any email and password works.
             </p>
@@ -54,7 +59,7 @@ const Login = () => {
                   data-testid="login-email"
                   type="email"
                   autoComplete="email"
-                  className="h-11 rounded-xl border-input bg-background"
+                  className="h-11 rounded-xl border-border/80 bg-background"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -67,7 +72,7 @@ const Login = () => {
                     data-testid="login-password"
                     type={show ? "text" : "password"}
                     autoComplete="current-password"
-                    className="h-11 rounded-xl border-input bg-background pr-11"
+                    className="h-11 rounded-xl border-border/80 bg-background pr-11"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
@@ -84,14 +89,14 @@ const Login = () => {
               </div>
             </div>
             {error && (
-              <p className="mt-3 text-xs text-destructive" role="alert" data-testid="login-error">
+              <p className="mt-3 text-xs text-destructive font-medium" role="alert" data-testid="login-error">
                 {error}
               </p>
             )}
             <button
               type="submit"
               data-testid="login-submit"
-              className="mt-6 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              className="btn-tactile mt-6 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground"
             >
               Log in
             </button>

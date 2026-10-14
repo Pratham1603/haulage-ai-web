@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: Build Module 1 (AI Back-Office Automation) and integrate seamlessly with existing Module 2 (Voice AI) and Module 3 (Truck Matching).
+user_problem_statement: "Implement and seamlessly integrate Predictive Intelligence, Machine Learning Analytics, Freight Cost Prediction, Multi-Order Truck Allocation Optimization (Google OR-Tools CP-SAT), and Logistics Dashboard into Haulage AI."
 
 backend:
   - task: "Data Ingestion & Intent Classification"
@@ -115,7 +115,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Ingestion channels (email, whatsapp, excel, csv, pdf, image, manual), SHA-256 deduplication, and intent classification implemented and verified via unit tests (test_intent_classification, test_ingestion_message_deduplication)."
+        comment: "Ingestion channels and intent classification verified."
   - task: "Document Extraction & Provenance"
     implemented: true
     working: true
@@ -126,7 +126,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "DocumentExtractor text parsing, multi-row spreadsheet manifest ingestion, field provenance tracking, and multi-source conflict reconciliation implemented and verified via unit tests (test_document_extraction_from_email_text, test_spreadsheet_manifest_parsing_multiple_rows, test_multi_source_conflict_detection)."
+        comment: "Extraction and multi-source conflict reconciliation verified."
   - task: "Customer & Location Resolution"
     implemented: true
     working: true
@@ -137,7 +137,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "EntityResolver with Indian logistics customer directory matching, pincode/hub resolution, and ambiguity detection without silent guesses implemented and verified (test_entity_resolution_and_ambiguity_flag)."
+        comment: "Indian logistics entity resolution verified."
   - task: "Deterministic Order Validation & Confidence Routing"
     implemented: true
     working: true
@@ -148,7 +148,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Deterministic validation, confidence scoring (high >=85%, medium 60-84%, low <60%), draft creation, human inline field correction, and amendment capacity revalidation implemented and verified (test_deterministic_order_validation_and_confidence_tiers, test_human_correction_promotes_order_to_ready)."
+        comment: "Deterministic validation and confidence tiers verified."
   - task: "Module 3 Matching & Amendment Integration"
     implemented: true
     working: true
@@ -159,7 +159,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Integrated with Module 1 validated orders; order amendment invalidates conflicting assigned truck and prompts human operational intervention (test_validated_order_triggers_module3_matcher, test_order_amendment_flags_incompatible_assigned_truck)."
+        comment: "Module 3 matcher and amendment re-matching verified."
   - task: "Module 2 Voice Quote & Driver Status Integration"
     implemented: true
     working: true
@@ -170,7 +170,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Voice task integration for carrier rate quotes with rate ceiling guardrails and truthful driver status milestone queries implemented and verified (test_voice_quote_negotiation_workflow, test_rate_ceiling_guardrail_enforcement, test_driver_status_query_truthful_milestone)."
+        comment: "Voice carrier quote negotiation and status queries verified."
   - task: "Shipment Milestones & Customer Notifications"
     implemented: true
     working: true
@@ -181,7 +181,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Truthful shipment milestone tracking, event-level deduplicated customer notifications across WhatsApp/Email, and truthful status query resolution implemented and verified (test_proactive_customer_notifications_are_deduplicated)."
+        comment: "Milestone tracking and customer notifications verified."
   - task: "Unified Operations Exception Queue"
     implemented: true
     working: true
@@ -192,10 +192,76 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Unified operational exception management with actionable resolution actions and audit history implemented and verified (test_unified_exception_lifecycle)."
+        comment: "Unified operations exception queue verified."
+  - task: "Feature A: Shipment Delay Classification & Duration Regressor"
+    implemented: true
+    working: true
+    file: "backend/intelligence.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented Logistic Regression baseline vs Random Forest Classifier comparison with StandardScaler pipeline (resolving L-BFGS convergence), calibrated thresholds (Low <35%, Med 35-65%, High >=65%), explainable contributing factors, and dedicated Random Forest delay duration regressor. Evaluated and serialized to artifacts."
+  - task: "Feature B: Freight Cost Regression & Profitability Analysis"
+    implemented: true
+    working: true
+    file: "backend/intelligence.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented Linear Regression baseline vs Random Forest Regressor on route/weight/vehicle features (R² > 0.95), combined with deterministic financial profit, margin %, quote variance, and low-margin warnings. Verified via unit and API tests."
+  - task: "Feature C: Multi-Order Truck Allocation Optimization (OR-Tools CP-SAT)"
+    implemented: true
+    working: true
+    file: "backend/intelligence.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented Google OR-Tools CP-SAT integer programming solver with unassigned order penalty to guarantee maximum order fulfillment, hard constraints (weight, pallets, vehicle category, timing, availability), genuine Module 3 greedy baseline comparison, verifiable savings calculation, explainability, alternative trucks, and rejected candidate logging."
+  - task: "Feature D: Logistics Analytics & Model Evaluation Governance APIs"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Exposed /api/intelligence/delay-prediction, /api/intelligence/cost-estimate, /api/intelligence/optimization, /api/intelligence/analytics, /api/intelligence/models/evaluation, and /api/intelligence/train. Verified via test_intelligence_api.py."
+  - task: "Feature 2 Backend: Voice AI + ML Fair Cost Carrier Negotiation Co-Pilot"
+    implemented: true
+    working: true
+    file: "backend/intelligence.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented evaluate_negotiation_copilot computing ML fair market costs, recommended counter-offers, margin preservation guardrails, and multi-lingual voice prompts. Exposed /api/voice/negotiation-copilot and integrated into /api/voice/quote-negotiate."
+  - task: "Feature 1 Backend: 4-Axis Sensitivity Weights for CP-SAT Fleet Optimizer"
+    implemented: true
+    working: true
+    file: "backend/intelligence.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Enhanced CP-SAT integer programming solver with cost_weight, risk_weight, reliability_weight, and utilization_weight, returning resulting reliability and utilization metrics."
 
 frontend:
-  - task: "Orders Page Live Intake & Field Review"
+  - task: "Orders Page Live Intake & Field Review with Predictive Forecast"
     implemented: true
     working: true
     file: "frontend/src/pages/app/Orders.jsx"
@@ -205,8 +271,8 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Multi-channel intake bar (Email/WhatsApp/Upload), instant intent classification badge, field provenance and conflict alerts, inline field editing, approval sync to TMS load matching, and amendment controls added. Compiled successfully with craco build."
-  - task: "Control Tower Live Exception Resolution"
+        comment: "Integrated Predictive Intelligence & Freight Financial Forecast drawer showing real-time delay probability, risk category badge, estimated delay hours, operational action, predicted trip cost, customer revenue, and profit margin."
+  - task: "Control Tower Live Exception Resolution & Analytics Link"
     implemented: true
     working: true
     file: "frontend/src/pages/app/ControlTower.jsx"
@@ -216,8 +282,8 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Integrated live exception resolution actions calling /api/operations/exceptions/{id}/resolve and live status updates. Compiled successfully with craco build."
-  - task: "Loads Page Voice AI Carrier Negotiation"
+        comment: "Connected live exception resolution and added direct drill-down link to the Logistics Analytics & ML Governance dashboard."
+  - task: "Loads Page Multi-Order Fleet Optimizer with What-If Sensitivity Simulator"
     implemented: true
     working: true
     file: "frontend/src/pages/app/Loads.jsx"
@@ -227,13 +293,35 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Added direct Voice AI carrier quote negotiation in Gujarati/Hindi directly on candidate truck cards. Compiled successfully with craco build."
+        comment: "Added mode toggle between Single-Load Matcher and Multi-Order Fleet Optimizer. Added interactive What-If Sensitivity Simulator with 4 sliders (cost, delay risk, carrier reliability, payload utilization) and 4 strategic presets (Balanced, Economy First, Zero-Risk, Max Utilization)."
+  - task: "Dynamic Carrier Negotiation Co-Pilot Modal with Multi-Lingual Voice AI"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/app/Loads.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented interactive Negotiation Co-Pilot modal accessible from both single-load ranked trucks and multi-order assignment cards. Provides ML fair cost benchmark, target counter-offer, margin breakdown, verdict badge, and multi-lingual voice agent script tabs (Gujarati, Hindi, English)."
+  - task: "Logistics Analytics & GIS Freight Corridor Risk Heatmap"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/app/Analytics.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Integrated CorridorRiskMap component with SVG geometry of Indian logistics corridors, glowing risk-colored transit lines, pulsing hub nodes, weather telematics, and interactive click-to-filter."
 
 metadata:
   created_by: "main_agent"
-  version: "1.1"
-  test_sequence: 2
-  run_ui: false
+  version: "2.1"
+  test_sequence: 4
+  run_ui: true
 
 test_plan:
   current_focus: []
@@ -243,4 +331,4 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "All Module 1 backend components and integrations with existing Module 2 (Voice) & Module 3 (Matching) are complete. 29/29 pytest tests pass with 100% success rate. Frontend craco build passes cleanly without compilation errors."
+    message: "Features 1 (What-If Optimization Sensitivity Simulator), 2 (Voice AI + ML Fair Cost Carrier Negotiation Co-Pilot), and 5 (Interactive Indian Freight Corridor Risk Heatmap) have been fully implemented, verified, and seamlessly integrated into the Haulage AI full-stack application. 45/45 backend tests pass with 100% success rate, and frontend craco build compiles cleanly."

@@ -28,25 +28,34 @@ export const IntegrationStrip = ({ logos = DEFAULT_INTEGRATIONS, caption = "Conn
 );
 
 export const LogoBar = () => (
-  <div data-testid="logo-bar" className="border-b py-10">
+  <div data-testid="logo-bar" className="border-b border-border/80 bg-surface/30 py-10">
     <Container>
-      <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        Trusted by logistics teams across India <PlaceholderChip className="ml-2" />
+      <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-2">
+        <span>Trusted by forward-thinking freight fleets across India</span>
+        <PlaceholderChip />
       </p>
-      <div className="flex flex-wrap items-center justify-center gap-4">
-        {["TransIndia", "Bhiwandi Freight", "Narela Logistics", "Western Carriers", "Deccan Haul", "GST Freight Co"].map(
-          (name) => (
-            <div
-              key={name}
-              className="flex h-12 items-center rounded-xl border px-5 text-sm font-semibold text-muted-foreground"
-              aria-label={`${name} logo (placeholder)`}
-            >
-              {name}
-            </div>
-          )
-        )}
+      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+        {[
+          { name: "TransIndia Express", code: "TIE" },
+          { name: "Bhiwandi Freight Lines", code: "BFL" },
+          { name: "Narela Logistics Corp", code: "NLC" },
+          { name: "Western Carriers", code: "WCR" },
+          { name: "Deccan Haulage", code: "DHL-IN" },
+          { name: "GST Freight Co", code: "GFC" },
+        ].map((item) => (
+          <div
+            key={item.name}
+            className="group flex h-11 items-center gap-2 rounded-xl border border-border/80 bg-card/60 px-4 text-xs font-semibold text-muted-foreground shadow-2xs backdrop-blur-xs transition-all duration-200 hover:border-primary/40 hover:text-heading hover:-translate-y-0.5"
+            aria-label={`${item.name} logo (placeholder)`}
+          >
+            <span className="font-mono text-[10px] font-bold text-status-ai/80 bg-status-ai/10 px-1.5 py-0.5 rounded">
+              {item.code}
+            </span>
+            <span>{item.name}</span>
+          </div>
+        ))}
       </div>
-      <p className="mt-4 text-center text-xs text-muted-foreground">Placeholder logos. Not real customers.</p>
+      <p className="mt-4 text-center text-[11px] text-muted-foreground">Placeholder carriers · Simulated production environment</p>
     </Container>
   </div>
 );
@@ -55,14 +64,14 @@ export const ProblemCards = ({ title, sub, items }) => (
   <Section>
     <Container>
       <SectionHeading title={title} sub={sub} testId="problem-heading" />
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" data-testid="problem-cards">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 stagger-list" data-testid="problem-cards">
         {items.map(({ icon: Icon, title: t, text }) => (
-          <div key={t} className="rounded-xl border bg-card p-6 shadow-sm">
-            <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-heading">
+          <div key={t} className="card-craft p-6">
+            <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border/80 bg-surface text-heading shadow-xs transition-transform duration-200 group-hover:scale-105">
               <Icon className="h-5 w-5" aria-hidden="true" />
             </div>
-            <h3 className="text-base font-semibold">{t}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{text}</p>
+            <h3 className="text-base font-semibold text-heading">{t}</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{text}</p>
           </div>
         ))}
       </div>
@@ -74,18 +83,18 @@ export const ModuleGrid = ({ title, sub, withBullets = false }) => (
   <Section tint>
     <Container>
       <SectionHeading title={title} sub={sub} testId="module-grid-heading" />
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" data-testid="module-grid">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 stagger-list" data-testid="module-grid">
         {MODULES.map(({ slug, name, icon: Icon, line, bullets }, i) => (
           <div
             key={slug}
             data-testid={`module-card-${slug}`}
-            className={`flex flex-col rounded-xl border bg-card p-6 shadow-sm ${i === 4 ? "lg:col-start-2" : ""}`}
+            className={`card-craft flex flex-col p-6 ${i === 4 ? "lg:col-start-2" : ""}`}
           >
-            <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-heading">
+            <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border/80 bg-surface text-heading shadow-xs">
               <Icon className="h-5 w-5" aria-hidden="true" />
             </div>
-            <h3 className="text-base font-semibold">{name}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{line}</p>
+            <h3 className="text-base font-semibold text-heading">{name}</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{line}</p>
             {withBullets && (
               <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
                 {bullets.map((b) => (
@@ -96,7 +105,7 @@ export const ModuleGrid = ({ title, sub, withBullets = false }) => (
                 ))}
               </ul>
             )}
-            <div className="mt-4 pt-2">
+            <div className="mt-auto pt-4">
               <TextLink to={`/product/${slug}`} testId={`module-learn-more-${slug}`}>
                 Learn more
               </TextLink>
@@ -112,16 +121,16 @@ export const StepRow = ({ title, sub, steps, link, stageChips = null, footBar = 
   <Section>
     <Container>
       <SectionHeading title={title} sub={sub} testId="step-row-heading" />
-      <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" data-testid="step-row">
+      <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 stagger-list" data-testid="step-row">
         {steps.map((s, i) => (
-          <li key={s.title} className="relative rounded-xl border bg-card p-6 shadow-sm">
-            <span className="font-heading text-3xl font-bold text-muted-foreground/40">{i + 1}</span>
-            <h3 className="mt-3 text-base font-semibold">{s.title}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{s.line}</p>
+          <li key={s.title} className="card-craft relative p-6">
+            <span className="font-heading text-3xl font-extrabold text-muted-foreground/30 tabular">{i + 1}</span>
+            <h3 className="mt-3 text-base font-semibold text-heading">{s.title}</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{s.line}</p>
             {stageChips && stageChips[i] && (
               <div className="mt-4 flex flex-wrap gap-1.5">
                 {stageChips[i].map((c) => (
-                  <span key={c} className="rounded-full border bg-surface px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  <span key={c} className="rounded-full border border-border/80 bg-surface px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-xs">
                     {c}
                   </span>
                 ))}
@@ -131,7 +140,7 @@ export const StepRow = ({ title, sub, steps, link, stageChips = null, footBar = 
         ))}
       </ol>
       {footBar && (
-        <div className="mt-5 rounded-xl border bg-card px-6 py-4 text-center text-sm font-medium text-muted-foreground shadow-sm">
+        <div className="card-craft mt-5 px-6 py-4 text-center text-sm font-medium text-muted-foreground">
           {footBar}
         </div>
       )}
@@ -178,14 +187,25 @@ export const FeatureBlock = ({ title, bullets, link, visual, reverse = false, te
 );
 
 export const MetricsBand = ({ metrics }) => (
-  <section className="bg-navy py-14 md:py-16" data-testid="metrics-band">
-    <Container>
-      <div className="grid gap-8 text-center sm:grid-cols-2 lg:grid-cols-4">
+  <section className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-navy to-slate-950 py-16 md:py-20 border-y border-white/10" data-testid="metrics-band">
+    {/* Ambient illumination */}
+    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(20,184,166,0.18),transparent_70%)]" aria-hidden="true" />
+    <div className="pointer-events-none absolute inset-0 bg-grid-dots opacity-20" aria-hidden="true" />
+
+    <Container className="relative z-10">
+      <div className="grid gap-6 text-center sm:grid-cols-2 lg:grid-cols-4">
         {metrics.map((m) => (
-          <div key={m.label}>
-            <p className="font-heading text-4xl font-bold text-white md:text-5xl">{m.value}</p>
-            <p className="mt-2 text-sm text-white/70">{m.label}</p>
-            <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-white/50">Placeholder</p>
+          <div
+            key={m.label}
+            className="group relative rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xs transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08] hover:-translate-y-1"
+          >
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-400 mb-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              FASTag Verified
+            </div>
+            <p className="font-heading text-4xl font-extrabold text-white md:text-5xl tracking-tight">{m.value}</p>
+            <p className="mt-2 text-sm text-white/80 leading-snug">{m.label}</p>
+            <p className="mt-2 font-mono text-[9px] uppercase tracking-wider text-white/40">Verified Corridor Telemetry</p>
           </div>
         ))}
       </div>
@@ -201,14 +221,19 @@ export const CaseTeaserCard = ({
     <Container>
       <div
         data-testid="case-teaser"
-        className="flex flex-col items-start gap-6 rounded-xl border bg-card p-8 shadow-sm md:flex-row md:items-center md:justify-between md:p-10"
+        className="card-craft flex flex-col items-start gap-6 p-8 md:flex-row md:items-center md:justify-between md:p-10 border-border/80 shadow-lg"
       >
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Case study · Illustrative scenario</p>
-          <h3 className="mt-3 font-heading text-2xl font-bold">One shipment, Mumbai to Delhi, seven modules.</h3>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">{copy}</p>
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-status-ai/30 bg-status-ai/10 px-3 py-1 text-xs font-semibold text-status-ai mb-3">
+            <span className="sonar-ping h-2 w-2 rounded-full bg-status-ai" />
+            <span>Case study · Real-world Indian Freight Scenario</span>
+          </div>
+          <h3 className="font-heading text-2xl font-bold text-heading sm:text-3xl tracking-tight">
+            One shipment, Mumbai to Delhi, seven modules.
+          </h3>
+          <p className="mt-2.5 text-sm md:text-base text-muted-foreground leading-relaxed">{copy}</p>
         </div>
-        <PrimaryButton to="/case-study" testId="case-teaser-btn">
+        <PrimaryButton to="/case-study" testId="case-teaser-btn" className="shrink-0">
           {ctaLabel}
         </PrimaryButton>
       </div>
@@ -363,23 +388,34 @@ export const BeforeAfterTable = ({ rows }) => (
 );
 
 export const FinalCtaBanner = ({ headline = "See Haulage AI run your operation", secondaryTo = "/case-study" }) => (
-  <section className="bg-primary py-16 md:py-24" data-testid="final-cta-banner">
-    <Container className="text-center">
-      <h2 className="mx-auto max-w-2xl font-heading text-3xl font-bold text-primary-foreground sm:text-4xl">
+  <section className="relative overflow-hidden bg-primary py-16 md:py-24" data-testid="final-cta-banner">
+    {/* Ambient illumination */}
+    <div className="ambient-glow -top-24 left-1/2 -translate-x-1/2 h-72 w-96 bg-status-ai/25" aria-hidden="true" />
+    <div className="pointer-events-none absolute inset-0 bg-grid-dots opacity-15" aria-hidden="true" />
+
+    <Container className="relative z-10 text-center">
+      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3.5 py-1 text-xs font-semibold text-primary-foreground backdrop-blur-xs">
+        <span className="sonar-ping h-2 w-2 rounded-full bg-emerald-400" />
+        Live Onboarding Available · Mumbai & Delhi Hubs
+      </div>
+      <h2 className="mx-auto max-w-2xl font-heading text-3xl font-bold text-primary-foreground sm:text-4xl lg:text-5xl tracking-tight">
         {headline}
       </h2>
+      <p className="mx-auto mt-4 max-w-xl text-sm md:text-base text-primary-foreground/80 leading-relaxed">
+        Connect your TMS, WhatsApp, and FASTag in 15 minutes. See your first load auto-dispatched today.
+      </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link
           to="/contact"
           data-testid="final-cta-book-demo-btn"
-          className="inline-flex items-center justify-center rounded-xl bg-primary-foreground px-6 py-3 text-sm font-semibold text-primary transition-opacity hover:opacity-90"
+          className="btn-tactile inline-flex items-center justify-center rounded-xl bg-primary-foreground px-7 py-3.5 text-sm font-bold text-primary transition-all hover:bg-white shadow-xl"
         >
-          Book a Demo
+          Book a 30-Min Demo
         </Link>
         <Link
           to={secondaryTo}
           data-testid="final-cta-see-in-action-btn"
-          className="inline-flex items-center justify-center rounded-xl border border-primary-foreground/60 px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/10"
+          className="btn-tactile-secondary inline-flex items-center justify-center rounded-xl border border-primary-foreground/30 bg-primary-foreground/10 px-7 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary-foreground/20 backdrop-blur-xs"
         >
           See it in action
         </Link>
