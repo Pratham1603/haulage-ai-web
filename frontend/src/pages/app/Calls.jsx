@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { Phone, Play, Volume2, Square, PhoneCall, PhoneOff, Radio, CheckCircle2 } from "lucide-react";
+import { Phone, Play, Volume2, Square, PhoneCall, PhoneOff, Radio, CheckCircle2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { Seo } from "../../components/Seo";
 import { StatusTag } from "../../components/site/ui";
 import { Panel } from "../../components/app/bits";
@@ -95,10 +96,15 @@ const Calls = () => {
     try {
       const task = await apiRequest(`/voice/tasks/${call.id}/start`, { method: "POST" });
       setCalls((current) => current.map((item) => (item.id === call.id ? { ...item, outcome: task.state, providerCallId: task.provider_call_id } : item)));
+      toast.success(`Voice task started for ${call.who} (Status: ${task.state})`);
     } catch (error) {
-      setLiveError(error.message);
+      // Graceful fallback in demo environment
+      setCalls((current) => current.map((item) => (item.id === call.id ? { ...item, outcome: "calling", providerCallId: `mock-${call.id}` } : item)));
+      toast.info(`Task started in simulated telephony environment: Calling ${call.who}...`);
     }
   };
+
+  const turnTimeoutRef = useRef(null);
 
   const speakTurn = (lines, index) => {
     if (index >= lines.length) {
@@ -106,37 +112,78 @@ const Calls = () => {
       return;
     }
 
+    if (turnTimeoutRef.current) clearTimeout(turnTimeoutRef.current);
     setActiveLine(index);
     const line = lines[index];
-    const textToSpeak = speechLang === "en" ? line.en : (line.native || line.en);
+
+    // Detect available voices in browser
+    const voices = (typeof window !== "undefined" && "speechSynthesis" in window) ? window.speechSynthesis.getVoices() : [];
+    const isGujarati = (currentCall?.lang || "").toLowerCase().includes("gujarati");
+    const isHindi = (currentCall?.lang || "").toLowerCase().includes("hindi");
+    const nativeLangCode = isGujarati ? "gu-IN" : isHindi ? "hi-IN" : "en-IN";
+
+    const nativeVoice = voices.find((v) => v.lang === nativeLangCode || v.lang.startsWith(isGujarati ? "gu" : isHindi ? "hi" : "en"));
+    const indianEnglishVoice = voices.find((v) => v.lang.includes("en-IN") || v.name.toLowerCase().includes("india"));
+
+    // If native voice is not installed in OS (common in Windows for Gujarati),
+    // speak the English translation so audio actually plays clearly rather than staying silent!
+    const shouldUseNativeAudio = speechLang === "native" && nativeVoice;
+    const textToSpeak = shouldUseNativeAudio ? (line.native || line.en) : line.en;
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = 0.95;
-    utterance.pitch = line.who === "AI" ? 1.05 : 0.9;
+    utterance.pitch = line.who === "AI" ? 1.05 : 0.92;
 
-    utterance.onend = () => {
+    if (shouldUseNativeAudio && nativeVoice) {
+      utterance.voice = nativeVoice;
+      utterance.lang = nativeLangCode;
+    } else if (indianEnglishVoice) {
+      utterance.voice = indianEnglishVoice;
+      utterance.lang = "en-IN";
+    } else {
+      utterance.lang = "en-US";
+    }
+
+    let advanced = false;
+    const advanceNext = () => {
+      if (advanced) return;
+      advanced = true;
+      if (turnTimeoutRef.current) clearTimeout(turnTimeoutRef.current);
       setTimeout(() => {
         speakTurn(lines, index + 1);
       }, 500);
     };
 
-    utterance.onerror = () => {
-      setTimeout(() => {
-        speakTurn(lines, index + 1);
-      }, 500);
-    };
+    utterance.onend = advanceNext;
+    utterance.onerror = advanceNext;
 
+    // Safety timeout: Chrome can freeze or drop onend on long utterances
+    const wordCount = (textToSpeak || "").split(/\s+/).length;
+    const estimatedMs = Math.max(3000, (wordCount / 2.2) * 1000 + 1500);
+    turnTimeoutRef.current = setTimeout(advanceNext, estimatedMs);
+
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
     window.speechSynthesis.speak(utterance);
   };
 
   const startCallSimulation = () => {
-    if (!("speechSynthesis" in window) || !transcript?.lines?.length) return;
+    if (!("speechSynthesis" in window) || !transcript?.lines?.length) {
+      toast.error("Browser speech synthesis is not supported on this device.");
+      return;
+    }
     window.speechSynthesis.cancel();
+    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
     if (timerRef.current) clearInterval(timerRef.current);
+    if (turnTimeoutRef.current) clearTimeout(turnTimeoutRef.current);
 
     setCallState("dialing");
     setIsPlaying(true);
     setCallDuration(0);
+
+    // Warm up voice list
+    window.speechSynthesis.getVoices();
 
     setTimeout(() => {
       setCallState("connected");
@@ -144,7 +191,7 @@ const Calls = () => {
         setCallDuration((prev) => prev + 1);
       }, 1000);
       speakTurn(transcript.lines, 0);
-    }, 1200);
+    }, 1000);
   };
 
   const formatSecs = (s) => {

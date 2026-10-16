@@ -69,9 +69,25 @@ export const LiveNegotiationArena = () => {
     // Web Speech API fallback
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+
+      const voices = window.speechSynthesis.getVoices();
+      const prefix = (lang || "").split("-")[0];
+      const matchedVoice = voices.find((v) => v.lang === lang || v.lang.startsWith(prefix));
+      const indianVoice = voices.find((v) => v.lang.includes("en-IN") || v.name.toLowerCase().includes("india"));
+
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.95;
       utterance.pitch = 1.0;
+      if (matchedVoice) {
+        utterance.voice = matchedVoice;
+        utterance.lang = lang;
+      } else if (indianVoice) {
+        utterance.voice = indianVoice;
+        utterance.lang = "en-IN";
+      } else {
+        utterance.lang = "en-US";
+      }
       window.speechSynthesis.speak(utterance);
     }
   };

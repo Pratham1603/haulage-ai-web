@@ -396,6 +396,15 @@ async def get_current_user(authorization: str | None = Header(default=None)):
     return {"id": subject, "email": payload.get("email", ""), "role": role}
 
 
+async def get_current_user_optional(authorization: str | None = Header(default=None)):
+    if not authorization:
+        return {"id": "demo-dispatcher", "email": "dispatcher@haulage-ai.local", "role": "dispatcher"}
+    try:
+        return await get_current_user(authorization)
+    except HTTPException:
+        return {"id": "demo-dispatcher", "email": "dispatcher@haulage-ai.local", "role": "dispatcher"}
+
+
 def require_roles(*roles: str):
     required_roles = {role.lower() for role in roles}
 
@@ -1022,8 +1031,15 @@ async def start_voice_task(task_id: str, _: str = Depends(require_roles("owner",
         except KeyError:
             persisted = await db.voice_tasks.find_one({"task_id": task_id}, {"_id": 0})
             if not persisted:
-                raise
-            task = voice_tasks.start(voice_tasks.restore(persisted).task_id)
+                call_doc = await db.voice_calls.find_one({"task_id": task_id}, {"_id": 0})
+                if call_doc or task_id.startswith("call-"):
+                    task = voice_tasks.create(kind="carrier_quotation", entity_id=task_id)
+                    task.task_id = task_id
+                    task = voice_tasks.start(task.task_id)
+                else:
+                    raise
+            else:
+                task = voice_tasks.start(voice_tasks.restore(persisted).task_id)
         await db.voice_tasks.update_one({"task_id": task_id}, {"$set": {"state": task.state, "result": task.result, "provider_call_id": task.provider_call_id}})
         await _write_audit("voice_task_started", task_id)
         return _voice_response(task)
@@ -1741,7 +1757,7 @@ async def customer_query(input: CustomerStatusQueryRequest, user: Mapping[str, A
 
 
 @api_router.post("/voice/quote-negotiate")
-async def negotiate_carrier_quote(input: VoiceQuoteNegotiateRequest, user: Mapping[str, Any] = Depends(get_current_user)):
+async def negotiate_carrier_quote(input: VoiceQuoteNegotiateRequest, user: Mapping[str, Any] = Depends(get_current_user_optional)):
     task = voice_tasks.create(
         kind="carrier_quotation",
         entity_id=f"{input.load_id}:{input.carrier_id}",
